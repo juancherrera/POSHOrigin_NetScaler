@@ -15,10 +15,10 @@ class LBVirtualServer {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN
+    [pscredential]$Credential
 
     [DscProperty(Mandatory)]
-    [pscredential]$Credential
+    [string]$NetScalerFQDN
 
     [DscProperty(Mandatory)]
     [string]$IPAddress
@@ -356,10 +356,10 @@ class LBServer {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN
+    [pscredential]$Credential
 
     [DscProperty(Mandatory)]
-    [pscredential]$Credential
+    [string]$NetScalerFQDN
 
     [DscProperty(Mandatory)]
     [string]$IPAddress
@@ -375,6 +375,320 @@ class LBServer {
     [DscProperty()]
     [ValidateSet('ENABLED', 'DISABLED')]
     [string]$State = 'ENABLED'
+
+    [DscProperty()]
+    [bool]$ParameterExport = $false
+
+    [void]Set() {
+        try {
+            [ref]$t = $null
+            if ([ipaddress]::TryParse($this.NetScalerFQDN,$t)) {
+                Connect-NetScaler -IPAddress $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+            } else {
+                Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+            }
+            # Try to get the server
+            $server = Get-NSLBServer -Name $this.Name -Verbose:$false -ErrorAction SilentlyContinue
+
+            if ($null -ne $server) {
+                # Run tests and set any needed attributes to match desired configuration
+                if ($server.ipaddress -ne $this.IPAddress) {
+                    Write-Verbose -Message "Setting server IP [$($this.IPAddress)]"
+                    Set-NSLBServer -Name $this.Name -IPAddress $this.IPAddress -Force -Verbose:$false
+                }
+                if ($server.comment -ne $this.Comments) {
+                    Write-Verbose -Message "Setting server comments [$($this.Comments)]"
+                    Set-NSLBServer -Name $this.Name -Comment $this.Comments -Force -Verbose:$false
+                }
+                if ($server.state -ne $this.State) { 
+                    Write-Verbose -Message "Setting server state [$($this.State)]"
+                    if ($this.State -eq 'ENABLED') {
+                        Enable-NSLBServer -Name $this.Name -Force -Verbose:$false
+                    } else {
+                        Disable-NSLBServer -Name $this.Name -Force -Verbose:$false
+                    }
+                }
+            } else {
+                Write-Verbose -Message "Creating server [$($this.Name)]"
+                $params = @{
+                    Name = $this.Name
+                    IPAddress = $this.IPAddress
+                    Comment = $this.Comments
+                    Confirm = $false
+                    Verbose = $false
+                }
+                if ($null -ne $this.TrafficDomainId) {
+                    $params.TrafficDomainId = $this.TrafficDomainId
+                }
+                New-NSLBServer @params
+            }
+            
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
+
+    [bool]Test() {
+
+        $pass = $true
+
+        [ref]$t = $null
+        if ([ipaddress]::TryParse($this.NetScalerFQDN,$t)) {
+            Connect-NetScaler -IPAddress $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } else {
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        }
+        # Try to get the server
+        $server = Get-NSLBServer -Name $this.Name -Verbose:$false -ErrorAction SilentlyContinue
+
+        if ($this.Ensure = [Ensure]::Present) {
+            if ($server) {
+                Write-Verbose -Message "Server [$($this.Name)] exists"
+                # Run tests against server
+                if ($server.ipaddress -ne $this.IPAddress) {
+                    Write-Verbose -Message "Server IP address does not match [$($server.ipaddress) <> $($this.IPAddress)]"
+                    $pass = $false
+                }
+                if ($server.comment -ne $this.Comments) {
+                    Write-Verbose -Message "Server comments do not match [$($server.comment) <> $($this.Comments)]"
+                    $pass = $false
+                }
+                if ($server.td -ne $this.TrafficDomainid) {
+                    Write-Verbose -Message "Server traffic domain ID does not match [$($server.td) <> $($this.TrafficDomainId)]"
+                    $pass = $false
+                }
+                if ($server.state -ne $this.State) { 
+                    Write-Verbose -Message "Server state does not match [$($server.state) <> $($this.State)]"
+                    $pass = $false
+                }
+            } else {
+                Write-Verbose -Message "Server [$($this.Name)] not found"
+                $pass = $false
+            }
+        } else {
+            if ($server) {
+                $pass = $false
+            }
+        }
+
+        # Export the resource parameters if told to.
+        # These values can be used by other DSC resources down the chain
+        if ($this.ParameterExport) {
+            $fileName = "LBServer_$($this.Name).json"
+            $json = $this.Get() | ConvertTo-Json
+            $folder = Join-Path -Path $env:USERPROFILE -ChildPath '.poshorigin'
+            if (-Not (Test-Path -Path $folder)) {
+                New-Item -ItemType Directory -Path $folder -Force
+            }
+            $fullPath = Join-Path -Path $folder -ChildPath $fileName
+            Write-Verbose -Message "Exporting parameters to [$fullPath]"
+            $json | Out-File -FilePath $fullPath -Force
+        }
+
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+
+        return $pass
+    }
+
+    [LBServer]Get() {
+        [ref]$t = $null
+        if ([ipaddress]::TryParse($this.NetScalerFQDN,$t)) {
+            Connect-NetScaler -IPAddress $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } else {
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        }
+
+        $s = Get-NSLBServer -Name $this.Name -Verbose:$false -ErrorAction SilentlyContinue
+
+        $obj = [LBServer]::new()
+        $obj.Name = $this.Name
+        $obj.IPAddress = $this.IPAddress
+        $obj.Comments = $this.Comments
+        $obj.TrafficDomainId = $this.TrafficDomainId
+        $obj.State = $this.State
+        $obj.Credential = $this.Credential
+        $obj.NetScalerFQDN = $this.NetScalerFQDN
+        $obj.ParameterExport = $this.ParameterExport
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.IPAddress = $s.ipv46
+            $obj.comments = $s.comment
+            $obj.TrafficDomainId = $s.td
+            $obj.State = $s.state
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
+
+
+#888888888888888888888888888888888888888888888888888888888888888888
+
+[DscResource()]
+class LBMonitor {
+    [DscProperty(Key)]
+    [string]$Name
+
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
+
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN    
+    
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
+
+    [DscProperty(Mandatory)]
+    [ValidateSet('PING', 'TCP', 'HTTP', 'TCP-ECV', 'HTTP-ECV', 'UDP-ECV', 'DNS', 'FTP', 'LDNS-PING',
+        'LDNS-TCP', 'RADIUS', 'USER', 'HTTP-INLINE', 'SIP-UDP', 'LOAD', 'FTP-EXTENDED', 'SMTP', 'SNMP',
+        'NNTP', 'MYSQL', 'MYSQL-ECV', 'MSSQL-ECV', 'ORACLE-ECV', 'LDAP', 'POP3', 'CITRIX-XML-SERVICE',
+        'CITRIX-WEB-INTERFACE', 'DNS-TCP', 'RTSP', 'ARP', 'CITRIX-AG', 'CITRIX-AAC-LOGINPAGE', 'CITRIX-AAC-LAS',
+        'CITRIX-XD-DDC', 'ND6', 'CITRIX-WI-EXTENDED', 'DIAMETER', 'RADIUS_ACCOUNTING', 'STOREFRONT')]
+    [string]$Type = 'HTTP'
+
+    [DscProperty(Mandatory)]
+    [ValidateRange(1, 20940000)]
+    [int]$Interval = 5
+    
+    [DscProperty(Mandatory)]
+    [ValidateSet('SEC', 'MSEC', 'MIN')]
+    [string]$IntervalType = 'SEC',
+
+    [DscProperty(Mandatory)]
+    [ValidateRange(1, 20939000)]
+    [int]$ResponseTimeout = 2,
+
+    [DscProperty(Mandatory)]
+    [ValidateSet('SEC', 'MSEC', 'MIN')]
+    [string]$ResponseTimeoutType = 'SEC',
+
+    [DscProperty(Mandatory)]
+    [ValidateRange(1, 20939000)]
+    [int]$Downtime = 30,
+
+    [DscProperty(Mandatory)]
+    [ValidateSet('SEC', 'MSEC', 'MIN')]
+    [string]$DowntimeType = 'SEC',
+
+    [DscProperty(Mandatory)]
+    [DscProperty()]
+    [int]$DestinationPort,
+
+    [DscProperty(Mandatory)]
+    [ValidateRange(1, 127)]
+    [int]$Retries = 3,
+
+    [DscProperty(Mandatory)]
+    [ValidateRange(0, 32)]
+    [int]$SuccessRetries = 1,
+
+    [DscProperty()]
+    [ValidateScript({$_ -match [IPAddress]$_ })]
+    [string]$DestinationIP,
+
+    [DscProperty()]
+    [ValidateRange(0, 20939000)]
+    [int]$Deviation,
+
+    [DscProperty()]
+    [ValidateRange(0, 100)]
+    [int]$ResponseTimeoutThreshold,
+
+    [DscProperty()]
+    [ValidateRange(0, 32)]
+    [int]$AlertRetries,
+
+    [DscProperty()]
+    [ValidateRange(0, 32)]
+    [int]$FailureRetries,
+
+    [DscProperty()]
+    [ValidateRange(1, 127)]
+    [string]$NetProfile,
+
+    [DscProperty()]
+    [ValidateSet('YES', 'NO')]
+    [string]$TOS = 'NO',
+
+    [DscProperty()]
+    [ValidateRange(1, 63)]
+    [int]$TOSID,
+
+    [DscProperty()]
+    [ValidateSet('ENABLED', 'DISABLED')]
+    [string]$State = 'ENABLED',
+
+    [DscProperty()]
+    [ValidateSet('Yes', 'NO')]
+    [string]$Reverse = 'NO',
+
+    [DscProperty()]
+    [ValidateSet('YES', 'NO')]
+    [string]$Transparent = 'NO',
+
+    [DscProperty()]
+    [ValidateSet('ENABLED', 'DISABLED')]
+    [string]$LRTM = 'DISABLED',
+
+    [DscProperty()]
+    [ValidateSet('YES', 'NO')]
+    [string]$Secure = 'NO',
+
+    [DscProperty()]
+    [ValidateSet('YES', 'NO')]
+    [string]$IPTunnel = 'NO',
+
+    [DscProperty()]
+    [string]$ScriptName,
+
+    [DscProperty()]
+    [ValidateScript({$_ -match [IPAddress]$_ })]
+    [string]$DispatcherIP,
+
+    [DscProperty()]
+    [int]$DispatcherPort,
+
+    [DscProperty()]
+    [string]$ScriptArgs,
+
+    [DscProperty()]
+    [System.Collections.Hashtable]$CustomProperty,
+
+    [DscProperty()]
+    [switch]$PassThru,
+
+    [DscProperty()]
+    [Parameter()]
+    [string[]]
+    $ResponseCode,
+
+    [DscProperty()]
+    [Parameter()]
+    [string]
+    $HTTPRequest,
+
+    [DscProperty()]
+    [Parameter()]
+    [string]
+    $Send,
+
+    [DscProperty()]
+    [Parameter()]
+    [string]
+    $Recv
 
     [DscProperty()]
     [bool]$ParameterExport = $false
