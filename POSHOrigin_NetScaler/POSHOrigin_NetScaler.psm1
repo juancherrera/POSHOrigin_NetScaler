@@ -1525,177 +1525,177 @@ class LBServiceGroup {
     }
 }
 
-[DscResource()]
-class LBNTPServer {
-    [DscProperty(Key)]
-    [string]$Server
+# [DscResource()]
+# class LBNTPServer {
+#     [DscProperty(Key)]
+#     [string]$Server
 
-    [DscProperty()]
-    [Ensure]$Ensure = [Ensure]::Present
+#     [DscProperty()]
+#     [Ensure]$Ensure = [Ensure]::Present
 
-    [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
+#     [DscProperty(Mandatory)]
+#     [string]$NetScalerFQDN    
     
-    [DscProperty(Mandatory)]
-    [pscredential]$Credential
+#     [DscProperty(Mandatory)]
+#     [pscredential]$Credential
 
-    [DscProperty()]
-    [int]$MinPollInterval
+#     [DscProperty()]
+#     [int]$MinPollInterval
 
-    [DscProperty()]
-    [ValidateRange(0, 4094)]
-    [int]$MaxPollInterval
+#     [DscProperty()]
+#     [ValidateRange(0, 4094)]
+#     [int]$MaxPollInterval
 
-    [DscProperty()]
-    [ValidateSet('Yes','No')]
-    [string]$PreferredNTPServer = 'Yes'
+#     [DscProperty()]
+#     [ValidateSet('Yes','No')]
+#     [string]$PreferredNTPServer = 'Yes'
 
-    Init() {
-        try {
-            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
-            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
-        } catch {
-            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
-        }
-    }
+#     Init() {
+#         try {
+#             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+#             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+#         } catch {
+#             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+#         }
+#     }
 
-    [void]Set() {
-        $t = $null
-        $t = $this.Init()
-        $NSObject = $this.Get()
+#     [void]Set() {
+#         $t = $null
+#         $t = $this.Init()
+#         $NSObject = $this.Get()
 
-        try {
-            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
-            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
-        } catch {
-            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
-        }
+#         try {
+#             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+#             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+#         } catch {
+#             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+#         }
 
-        try {
-            switch ($this.Ensure) {
-                'Present' {
-                    if ($this.Ensure -eq $NSObject.Ensure) {
-                        if ($NSObject.Server -ne $this.Server) {
-                            Write-Warning -Message "The NTP server name cannot be set to [$($this.Server)], resource can only be removed and recreated"
-                        }
-                        if ($NSObject.MinPollInterval -ne $this.MinPollInterval) {
-                            Write-Verbose -Message "Setting Service Group MinPollInterval [$($this.MinPollInterval)]"
-                            Set-NSNTPServer -Server $this.Server -MinPollInterval $this.MinPollInterval -Verbose:$false
-                        }
-                        if ($NSObject.MaxPollInterval -ne $this.MaxPollInterval) {
-                            Write-Verbose -Message "Setting Service Group MaxPollInterval [$($this.MaxPollInterval)]"
-                            Set-NSNTPServer -Server $this.Server -MaxPollInterval $this.MaxPollInterval -Verbose:$false
-                        }
-                        if ($NSObject.PreferredNTPServer -ne $this.PreferredNTPServer) {
-                            Write-Warning -Message "The preferred NTP server cannot be set to [$($this.PreferredNTPServer)], setting can only be set manually"
-                        }
-                    } else {
-                        Write-Verbose -Message "Creating resource [$($this.Name)]"
-                        $params = @{
-                            server = $this.Server
-                            minpoll  = $this.MinPollInterval
-                            maxpoll  = $this.MaxPollInterval
-                            preferredntpserver = $this.PreferredNTPServer
-                        }
-                        New-NSNTPServer @params -Verbose:$false -ErrorAction SilentlyContinue
-                    }        
-                } 'Absent' {
-                    if ($this.Ensure -ne $NSObject.Ensure) {
-                        Remove-NSNTPServer -Server $this.Server -ErrorAction SilentlyContinue
-                        Write-Verbose -Message "Removing resource: $($this.Server)"
-                    }
-                }
-            }
-        } catch {
-            Write-Error 'There was a problem setting the resource'
-            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
-            Write-Error $_
-        }
-        try {
-            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-        } catch {
-            # Do nothing
-        }
-    }
+#         try {
+#             switch ($this.Ensure) {
+#                 'Present' {
+#                     if ($this.Ensure -eq $NSObject.Ensure) {
+#                         if ($NSObject.Server -ne $this.Server) {
+#                             Write-Warning -Message "The NTP server name cannot be set to [$($this.Server)], resource can only be removed and recreated"
+#                         }
+#                         if ($NSObject.MinPollInterval -ne $this.MinPollInterval) {
+#                             Write-Verbose -Message "Setting Service Group MinPollInterval [$($this.MinPollInterval)]"
+#                             Set-NSNTPServer -Server $this.Server -MinPollInterval $this.MinPollInterval -Verbose:$false
+#                         }
+#                         if ($NSObject.MaxPollInterval -ne $this.MaxPollInterval) {
+#                             Write-Verbose -Message "Setting Service Group MaxPollInterval [$($this.MaxPollInterval)]"
+#                             Set-NSNTPServer -Server $this.Server -MaxPollInterval $this.MaxPollInterval -Verbose:$false
+#                         }
+#                         if ($NSObject.PreferredNTPServer -ne $this.PreferredNTPServer) {
+#                             Write-Warning -Message "The preferred NTP server cannot be set to [$($this.PreferredNTPServer)], setting can only be set manually"
+#                         }
+#                     } else {
+#                         Write-Verbose -Message "Creating resource [$($this.Name)]"
+#                         $params = @{
+#                             server = $this.Server
+#                             minpoll  = $this.MinPollInterval
+#                             maxpoll  = $this.MaxPollInterval
+#                             preferredntpserver = $this.PreferredNTPServer
+#                         }
+#                         New-NSNTPServer @params -Verbose:$false -ErrorAction SilentlyContinue
+#                     }        
+#                 } 'Absent' {
+#                     if ($this.Ensure -ne $NSObject.Ensure) {
+#                         Remove-NSNTPServer -Server $this.Server -ErrorAction SilentlyContinue
+#                         Write-Verbose -Message "Removing resource: $($this.Server)"
+#                     }
+#                 }
+#             }
+#         } catch {
+#             Write-Error 'There was a problem setting the resource'
+#             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+#             Write-Error $_
+#         }
+#         try {
+#             Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+#         } catch {
+#             # Do nothing
+#         }
+#     }
 
- [bool]Test() {
-        $pass = $true
-        $t = $null
-        $t = $this.Init()
-        $NSObject = $this.Get()
-        try {
-            switch ($this.Ensure) {
-                'Present' {
-                    if ($this.Ensure -eq $NSObject.Ensure) {
-                        # Run tests and set any needed attributes to match desired configuration
-                        if ($NSObject.Server -ne $this.Server) {
-                            Write-Verbose -Message "Server does not match [$($NSObject.Server) <> $($this.Server)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.MinPollInterval -ne $this.MinPollInterval) {
-                            Write-Verbose -Message "Min Poll Interval does not match [$($NSObject.MinPollInterval) <> $($this.MinPollInterval)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.MaxPollInterval -ne $this.MaxPollInterval) {
-                            Write-Verbose -Message "Max Poll Interval does not match [$($NSObject.MaxPollInterval) <> $($this.MaxPollInterval)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.PreferredNTPServer -ne $this.PreferredNTPServer) {
-                            Write-Verbose -Message "Preferred NTP Server does not match [$($NSObject.PreferredNTPServer) <> $($this.PreferredNTPServer)]"
-                            $pass = $false
-                        }
-                    } else {
-                        Write-Verbose -Message "Resource [$($this.Server)] was not found"
-                        $pass = $false
-                    }
-                } 
-                'Absent' {
-                    if ($this.Ensure -ne $NSObject.Ensure) {
-                        $pass = $false
-                    }
-                }
-            }
-        } catch {
-            Write-Error 'There was a problem testing the resource'
-            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
-            Write-Error $_
-        }
-        try {
-            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-        } catch {
-            # Do nothing
-        }
-        return $pass
-    }
+#  [bool]Test() {
+#         $pass = $true
+#         $t = $null
+#         $t = $this.Init()
+#         $NSObject = $this.Get()
+#         try {
+#             switch ($this.Ensure) {
+#                 'Present' {
+#                     if ($this.Ensure -eq $NSObject.Ensure) {
+#                         # Run tests and set any needed attributes to match desired configuration
+#                         if ($NSObject.Server -ne $this.Server) {
+#                             Write-Verbose -Message "Server does not match [$($NSObject.Server) <> $($this.Server)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.MinPollInterval -ne $this.MinPollInterval) {
+#                             Write-Verbose -Message "Min Poll Interval does not match [$($NSObject.MinPollInterval) <> $($this.MinPollInterval)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.MaxPollInterval -ne $this.MaxPollInterval) {
+#                             Write-Verbose -Message "Max Poll Interval does not match [$($NSObject.MaxPollInterval) <> $($this.MaxPollInterval)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.PreferredNTPServer -ne $this.PreferredNTPServer) {
+#                             Write-Verbose -Message "Preferred NTP Server does not match [$($NSObject.PreferredNTPServer) <> $($this.PreferredNTPServer)]"
+#                             $pass = $false
+#                         }
+#                     } else {
+#                         Write-Verbose -Message "Resource [$($this.Server)] was not found"
+#                         $pass = $false
+#                     }
+#                 } 
+#                 'Absent' {
+#                     if ($this.Ensure -ne $NSObject.Ensure) {
+#                         $pass = $false
+#                     }
+#                 }
+#             }
+#         } catch {
+#             Write-Error 'There was a problem testing the resource'
+#             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+#             Write-Error $_
+#         }
+#         try {
+#             Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+#         } catch {
+#             # Do nothing
+#         }
+#         return $pass
+#     }
 
-    [LBNTPServer]Get() {
-        $t = $null
-        $t = $this.Init()
+#     [LBNTPServer]Get() {
+#         $t = $null
+#         $t = $this.Init()
 
-        try {
-            $s = Get-NSNTPServer -Name $this.Server -Verbose:$false -ErrorAction SilentlyContinue
-        } catch {
-            $s = $null
-        }
+#         try {
+#             $s = Get-NSNTPServer -Name $this.Server -Verbose:$false -ErrorAction SilentlyContinue
+#         } catch {
+#             $s = $null
+#         }
 
-        $obj = [LBNTPServer]::new()
-        $obj.Server = $this.Server
-        $obj.MinPollInterval = $this.MinPollInterval
-        $obj.MaxPollInterval = $this.MaxPollInterval
-        $obj.PreferredNTPServer = $this.PreferredNTPServer
-        if ($s) {
-            $obj.Ensure = [ensure]::Present
-            $obj.Server = $s.serverip
-            $obj.MinPollInterval = $s.minpoll
-            $obj.MaxPollInterval = $s.maxpoll
-            $obj.PreferredNTPServer = $s.preferredntpserver
-        } else {
-            $obj.Ensure = [ensure]::Absent
-        }
-        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-        return $obj
-    }
-}
+#         $obj = [LBNTPServer]::new()
+#         $obj.Server = $this.Server
+#         $obj.MinPollInterval = $this.MinPollInterval
+#         $obj.MaxPollInterval = $this.MaxPollInterval
+#         $obj.PreferredNTPServer = $this.PreferredNTPServer
+#         if ($s) {
+#             $obj.Ensure = [ensure]::Present
+#             $obj.Server = $s.serverip
+#             $obj.MinPollInterval = $s.minpoll
+#             $obj.MaxPollInterval = $s.maxpoll
+#             $obj.PreferredNTPServer = $s.preferredntpserver
+#         } else {
+#             $obj.Ensure = [ensure]::Absent
+#         }
+#         Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+#         return $obj
+#     }
+# }
 
 [DscResource()]
 class LBResponderPolicy {
@@ -2853,448 +2853,448 @@ class LBNSFeature {
     }
 }
 
-[DscResource()]
-class LBSSLCertificate {
-    [DscProperty(Key)]
-    [string]$CertKeyName
+# [DscResource()]
+# class LBSSLCertificate {
+#     [DscProperty(Key)]
+#     [string]$CertKeyName
 
-    [DscProperty()]
-    [Ensure]$Ensure = [Ensure]::Present
+#     [DscProperty()]
+#     [Ensure]$Ensure = [Ensure]::Present
 
-    [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
+#     [DscProperty(Mandatory)]
+#     [string]$NetScalerFQDN    
     
-    [DscProperty(Mandatory)]
-    [pscredential]$Credential
+#     [DscProperty(Mandatory)]
+#     [pscredential]$Credential
 
-    [DscProperty()]
-    [string]$CertPath
+#     [DscProperty()]
+#     [string]$CertPath
 
-    [DscProperty()]
-    [string]$KeyPath
+#     [DscProperty()]
+#     [string]$KeyPath
 
-    [DscProperty()]
-    [ValidateSet('PEM','DER','PFX')]
-    [string]$CertKeyFormat = 'PEM'
+#     [DscProperty()]
+#     [ValidateSet('PEM','DER','PFX')]
+#     [string]$CertKeyFormat = 'PEM'
 
-    [DscProperty()]
-    [securestring]$Password
+#     [DscProperty()]
+#     [securestring]$Password
 
 
-    Init() {
-        try {
-            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
-            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
-        } catch {
-            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
-        }
-    }
+#     Init() {
+#         try {
+#             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+#             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+#         } catch {
+#             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+#         }
+#     }
 
-    [void]Set() {
-        $t = $null
-        $t = $this.Init()
-        $NSObject = $this.Get()
+#     [void]Set() {
+#         $t = $null
+#         $t = $this.Init()
+#         $NSObject = $this.Get()
 
-        try {
-            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
-            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
-        } catch {
-            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
-        }
+#         try {
+#             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+#             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+#         } catch {
+#             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+#         }
 
-        try {
-            switch ($this.Ensure) {
-                'Present' {
-                    if ($this.Ensure -eq $NSObject.Ensure) {
-                        # Run tests and set any needed attributes to match desired configuration
-                        if (($NSObject.CertKeyName -ne $this.CertKeyName) -OR ($NSObject.CertPath -ne $this.CertPath) -OR ($NSObject.KeyPath -ne $this.KeyPath) -OR ($NSObject.CertKeyFormat -ne $this.CertKeyFormat)) {
-                            Write-Verbose -Message "Warning, resource cannot be changed to [$($this.CertKeyName)], resource can only be removed and recreated"
-                            Remove-NSCertKeyPair -CertKeyName $this.CertKeyName
-                        }                 
-                } else {
-                        Write-Verbose -Message "Creating resource [$($this.CertKeyName)]"
-                        $params = @{
-                            CertKeyName = $this.CertKeyName
-                            CertPath  = $this.CertPath
-                            KeyPath  = $this.KeyPath
-                            CertKeyFormat = $this.CertKeyFormat
-                        }
-                        Add-NSCertKeyPair @params -ErrorAction SilentlyContinue
-                    }
-                }       
-                'Absent' {
-                    if ($this.Ensure -ne $NSObject.Ensure) {
-                        Remove-NSResponderAction -Name $NSObject.CertKeyName -ErrorAction SilentlyContinue
-                        Write-Verbose -Message "Removed Certificate: $($this.Name)"
-                    }
-                }
-            }
-        } catch {
-            Write-Error 'There was a problem setting the resource'
-            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
-            Write-Error $_
-        }
-        try {
-            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-        } catch {
-            # Do nothing
-        }
-    }
+#         try {
+#             switch ($this.Ensure) {
+#                 'Present' {
+#                     if ($this.Ensure -eq $NSObject.Ensure) {
+#                         # Run tests and set any needed attributes to match desired configuration
+#                         if (($NSObject.CertKeyName -ne $this.CertKeyName) -OR ($NSObject.CertPath -ne $this.CertPath) -OR ($NSObject.KeyPath -ne $this.KeyPath) -OR ($NSObject.CertKeyFormat -ne $this.CertKeyFormat)) {
+#                             Write-Verbose -Message "Warning, resource cannot be changed to [$($this.CertKeyName)], resource can only be removed and recreated"
+#                             Remove-NSCertKeyPair -CertKeyName $this.CertKeyName
+#                         }                 
+#                 } else {
+#                         Write-Verbose -Message "Creating resource [$($this.CertKeyName)]"
+#                         $params = @{
+#                             CertKeyName = $this.CertKeyName
+#                             CertPath  = $this.CertPath
+#                             KeyPath  = $this.KeyPath
+#                             CertKeyFormat = $this.CertKeyFormat
+#                         }
+#                         Add-NSCertKeyPair @params -ErrorAction SilentlyContinue
+#                     }
+#                 }       
+#                 'Absent' {
+#                     if ($this.Ensure -ne $NSObject.Ensure) {
+#                         Remove-NSResponderAction -Name $NSObject.CertKeyName -ErrorAction SilentlyContinue
+#                         Write-Verbose -Message "Removed Certificate: $($this.Name)"
+#                     }
+#                 }
+#             }
+#         } catch {
+#             Write-Error 'There was a problem setting the resource'
+#             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+#             Write-Error $_
+#         }
+#         try {
+#             Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+#         } catch {
+#             # Do nothing
+#         }
+#     }
 
- [bool]Test() {
-        $pass = $true
-        $t = $null
-        $t = $this.Init()
-        $NSObject = $this.Get()
-        try {
-            switch ($this.Ensure) {
-                'Present' {
-                    if ($this.Ensure -eq $NSObject.Ensure) {
-                            # Run tests and set any needed attributes to match desired configuration
-                            if ($NSObject.certkeyname -ne $this.CertKeyName) {
-                                Write-Verbose -Message "Certificate Key Name does not match [$($NSObject.certkeyname) <> $($this.CertKeyName)]"
-                                $pass = $false
-                            }
-                            if ($NSObject.certpath -ne $this.CertPath) {
-                                Write-Verbose -Message "Certificate Path does not match [$($NSObject.certpath) <> $($this.CertPath)]"
-                                $pass = $false
-                            }
-                            if ($this.KeyPath) {
-                                if ($NSObject.keypath -ne $this.KeyPath) {
-                                    Write-Verbose -Message "Key Path does not match [$($NSObject.keypath) <> $($this.KeyPath)]"
-                                    $pass = $false
-                                }
-                            }
-                    } else {
-                        Write-Verbose -Message "Certificate[$($this.CertKeyName)] was not found"
-                        $pass = $false
-                    }
-                }
-                'Absent' {
-                    if ($this.Ensure -ne $NSObject.Ensure) {
-                        $pass = $false
-                    }
-                }
-            }
-        } catch {
-            Write-Error 'There was a problem testing the resource'
-            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
-            Write-Error $_
-        }
-        try {
-            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-        } catch {
-            # Do nothing
-        }
-        return $pass        
-    }
+#  [bool]Test() {
+#         $pass = $true
+#         $t = $null
+#         $t = $this.Init()
+#         $NSObject = $this.Get()
+#         try {
+#             switch ($this.Ensure) {
+#                 'Present' {
+#                     if ($this.Ensure -eq $NSObject.Ensure) {
+#                             # Run tests and set any needed attributes to match desired configuration
+#                             if ($NSObject.certkeyname -ne $this.CertKeyName) {
+#                                 Write-Verbose -Message "Certificate Key Name does not match [$($NSObject.certkeyname) <> $($this.CertKeyName)]"
+#                                 $pass = $false
+#                             }
+#                             if ($NSObject.certpath -ne $this.CertPath) {
+#                                 Write-Verbose -Message "Certificate Path does not match [$($NSObject.certpath) <> $($this.CertPath)]"
+#                                 $pass = $false
+#                             }
+#                             if ($this.KeyPath) {
+#                                 if ($NSObject.keypath -ne $this.KeyPath) {
+#                                     Write-Verbose -Message "Key Path does not match [$($NSObject.keypath) <> $($this.KeyPath)]"
+#                                     $pass = $false
+#                                 }
+#                             }
+#                     } else {
+#                         Write-Verbose -Message "Certificate[$($this.CertKeyName)] was not found"
+#                         $pass = $false
+#                     }
+#                 }
+#                 'Absent' {
+#                     if ($this.Ensure -ne $NSObject.Ensure) {
+#                         $pass = $false
+#                     }
+#                 }
+#             }
+#         } catch {
+#             Write-Error 'There was a problem testing the resource'
+#             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+#             Write-Error $_
+#         }
+#         try {
+#             Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+#         } catch {
+#             # Do nothing
+#         }
+#         return $pass        
+#     }
 
-    [LBSSLCertificate]Get() {
-        $t = $null
-        $t = $this.Init()
+#     [LBSSLCertificate]Get() {
+#         $t = $null
+#         $t = $this.Init()
 
-        try {
-            $s = Get-NSCertKeyPair -CertKeyName $this.CertKeyName -Verbose:$false -ErrorAction SilentlyContinue
-        } catch {
-            $s = $null
-        }
-        $obj = [LBSSLCertificate]::new()
-        $obj.CertKeyName = $this.CertKeyName
-        $obj.CertPath = $this.CertPath        
-        $obj.CertKeyFormat = $this.CertKeyFormat
-        $obj.KeyPath = $this.KeyPath        
-        if ($s) {
-            $obj.Ensure = [ensure]::Present
-            $obj.CertKeyName = $s.certkey
-            $obj.CertPath = $s.cert
-            $obj.CertKeyFormat = $s.inform
-            if ($s.key) {
-                $obj.KeyPath = $s.key
-            }
-        } else {
-            $obj.Ensure = [ensure]::Absent
-        }
-        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-        return $obj
-    }
-}
+#         try {
+#             $s = Get-NSCertKeyPair -CertKeyName $this.CertKeyName -Verbose:$false -ErrorAction SilentlyContinue
+#         } catch {
+#             $s = $null
+#         }
+#         $obj = [LBSSLCertificate]::new()
+#         $obj.CertKeyName = $this.CertKeyName
+#         $obj.CertPath = $this.CertPath        
+#         $obj.CertKeyFormat = $this.CertKeyFormat
+#         $obj.KeyPath = $this.KeyPath        
+#         if ($s) {
+#             $obj.Ensure = [ensure]::Present
+#             $obj.CertKeyName = $s.certkey
+#             $obj.CertPath = $s.cert
+#             $obj.CertKeyFormat = $s.inform
+#             if ($s.key) {
+#                 $obj.KeyPath = $s.key
+#             }
+#         } else {
+#             $obj.Ensure = [ensure]::Absent
+#         }
+#         Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+#         return $obj
+#     }
+# }
 
-[DscResource()]
-class LBNSIP {
-    [DscProperty(Key)]
-    [string]$IPAddress
+# [DscResource()]
+# class LBNSIP {
+#     [DscProperty(Key)]
+#     [string]$IPAddress
 
-    [DscProperty()]
-    [Ensure]$Ensure = [Ensure]::Present
+#     [DscProperty()]
+#     [Ensure]$Ensure = [Ensure]::Present
 
-    [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
+#     [DscProperty(Mandatory)]
+#     [string]$NetScalerFQDN    
     
-    [DscProperty(Mandatory)]
-    [pscredential]$Credential
+#     [DscProperty(Mandatory)]
+#     [pscredential]$Credential
 
-    [DscProperty(Mandatory)]
-    [string]$SubnetMask
+#     [DscProperty(Mandatory)]
+#     [string]$SubnetMask
 
-    [DscProperty()]
-    [string]$Type = 'SNIP'
+#     [DscProperty()]
+#     [string]$Type = 'SNIP'
 
-    [DscProperty(Mandatory)]
-    [bool]$VServer = $false
+#     [DscProperty(Mandatory)]
+#     [bool]$VServer = $false
 
-    [DscProperty(Mandatory)]
-    [bool]$Telnet = $false
+#     [DscProperty(Mandatory)]
+#     [bool]$Telnet = $false
 
-    [DscProperty(Mandatory)]
-    [bool]$FTP = $false
+#     [DscProperty(Mandatory)]
+#     [bool]$FTP = $false
 
-    [DscProperty(Mandatory)]
-    [bool]$GUI = $false
+#     [DscProperty(Mandatory)]
+#     [bool]$GUI = $false
 
-    [DscProperty(Mandatory)]
-    [bool]$SSH = $false
+#     [DscProperty(Mandatory)]
+#     [bool]$SSH = $false
 
-    [DscProperty(Mandatory)]
-    [bool]$SNMP = $false
+#     [DscProperty(Mandatory)]
+#     [bool]$SNMP = $false
 
-    [DscProperty(Mandatory)]
-    [bool]$MgmtAccess = $false
+#     [DscProperty(Mandatory)]
+#     [bool]$MgmtAccess = $false
 
-    Init() {
-        try {
-            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
-            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
-        } catch {
-            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
-        }
-    }
+#     Init() {
+#         try {
+#             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+#             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+#         } catch {
+#             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+#         }
+#     }
 
-    [void]Set() {
-        $t = $null
-        $t = $this.Init()
-        $NSObject = $this.Get()
+#     [void]Set() {
+#         $t = $null
+#         $t = $this.Init()
+#         $NSObject = $this.Get()
 
-        try {
-            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
-            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
-        } catch {
-            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
-        }
+#         try {
+#             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+#             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+#         } catch {
+#             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+#         }
 
-        try {
-            switch ($this.Ensure) {
-                'Present' {
-                    if ($this.Ensure -eq $NSObject.Ensure) {
-                            # Run tests and set any needed attributes to match desired configuration
-                        if ($NSObject.IPAddressName -ne $this.IPAddress) {
-                            Write-Verbose -Message "Warning, the resource cannot be set to [$($this.IPAddress)]"
-                        }
-                        if ($NSObject.SubnetMask -ne $this.SubnetMask) {
-                            Write-Verbose -Message "Resource name does not match [$($this.SubnetMask)]"
-                            Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask
-                        } 
-                        if ($NSObject.Type -ne $this.Type) {
-                            Write-Verbose -Message "Warning, the resource cannot be set to [$($this.Type)]"
-                        }
-                        if ($NSObject.VServer -ne $this.VServer) {
-                            Write-Verbose -Message "Setting vServer [$($this.VServer)]"
-                            Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -VServer
-                        }
-                        if ($NSObject.Telnet -ne $this.Telnet) {
-                            Write-Verbose -Message "Setting Telnet [$($this.Telnet)]"
-                            Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -Telnet
-                        }                                                                                     
-                        if ($NSObject.FTP -ne $this.FTP) {
-                            Write-Verbose -Message "Setting FTP [$($this.FTP)]"
-                            Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -FTP
-                        }
-                        if ($NSObject.GUI -ne $this.GUI) {
-                            Write-Verbose -Message "Setting GUI [$($this.GUI)]"
-                            Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -GUI
-                        }
-                        if ($NSObject.SSH -ne $this.SSH) {
-                            Write-Verbose -Message "Setting GUI [$($this.SSH)]"
-                            Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -SSH
-                        }
-                        if ($NSObject.SNMP -ne $this.SNMP) {
-                            Write-Verbose -Message "Setting SNMP [$($this.SNMP)]"
-                            Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -SNMP
-                        }
-                        if ($NSObject.MgmtAccess -ne $this.MgmtAccess) {
-                            Write-Verbose -Message "Setting Management Access [$($this.MgmtAccess)]"
-                            Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -MgmtAccess
-                        }
-                    } else {
-                        Write-Verbose -Message "Feature enabled, [$($this.IPAddress)]"
-                        $params = @{
-                            ipaddress = $this.IPAddress
-                            netmask = $this.SubnetMask
-                            type = $this.Type
-                        }                         
-                       Add-NSIPResource @params -Confirm:$false
-                    #    $switches {
-                    #         ipaddress = $this.IPAddress
-                    #         netmask = $this.SubnetMask
-                    #         type = $this.Type
-                    #         vserver = $this.VServer
-                    #         telnet = $this.Telnet
-                    #         ftp = $this.FTP
-                    #         gui = $this.GUI
-                    #         ssh = $this.SSH
-                    #         snmp = $this.SNMP        
-                    #         mgmtaccess = $this.mgmtaccess
-                    #    }
-                    #    Invoke-DscResource -Method set -ModuleName poshorigin_netscaler -Name LBNSIP -Property $switches
-                    }
-                } 'Absent' {
-                    if ($this.Ensure -ne $NSObject.Ensure) {
-                        Disable-NSFeature -Name $this.Name -Confirm:$false
-                        Write-Verbose -Message "Feature disabled: $($this.Name)"
-                    }
-                 }
-              }   
-        } catch {
-            Write-Error 'There was a problem setting the resource'
-            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
-            Write-Error $_
-        }
-        try {
-            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-        } catch {
-            # Do nothing
-        }
-    }
+#         try {
+#             switch ($this.Ensure) {
+#                 'Present' {
+#                     if ($this.Ensure -eq $NSObject.Ensure) {
+#                             # Run tests and set any needed attributes to match desired configuration
+#                         if ($NSObject.IPAddressName -ne $this.IPAddress) {
+#                             Write-Verbose -Message "Warning, the resource cannot be set to [$($this.IPAddress)]"
+#                         }
+#                         if ($NSObject.SubnetMask -ne $this.SubnetMask) {
+#                             Write-Verbose -Message "Resource name does not match [$($this.SubnetMask)]"
+#                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask
+#                         } 
+#                         if ($NSObject.Type -ne $this.Type) {
+#                             Write-Verbose -Message "Warning, the resource cannot be set to [$($this.Type)]"
+#                         }
+#                         if ($NSObject.VServer -ne $this.VServer) {
+#                             Write-Verbose -Message "Setting vServer [$($this.VServer)]"
+#                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -VServer
+#                         }
+#                         if ($NSObject.Telnet -ne $this.Telnet) {
+#                             Write-Verbose -Message "Setting Telnet [$($this.Telnet)]"
+#                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -Telnet
+#                         }                                                                                     
+#                         if ($NSObject.FTP -ne $this.FTP) {
+#                             Write-Verbose -Message "Setting FTP [$($this.FTP)]"
+#                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -FTP
+#                         }
+#                         if ($NSObject.GUI -ne $this.GUI) {
+#                             Write-Verbose -Message "Setting GUI [$($this.GUI)]"
+#                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -GUI
+#                         }
+#                         if ($NSObject.SSH -ne $this.SSH) {
+#                             Write-Verbose -Message "Setting GUI [$($this.SSH)]"
+#                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -SSH
+#                         }
+#                         if ($NSObject.SNMP -ne $this.SNMP) {
+#                             Write-Verbose -Message "Setting SNMP [$($this.SNMP)]"
+#                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -SNMP
+#                         }
+#                         if ($NSObject.MgmtAccess -ne $this.MgmtAccess) {
+#                             Write-Verbose -Message "Setting Management Access [$($this.MgmtAccess)]"
+#                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -MgmtAccess
+#                         }
+#                     } else {
+#                         Write-Verbose -Message "Feature enabled, [$($this.IPAddress)]"
+#                         $params = @{
+#                             ipaddress = $this.IPAddress
+#                             netmask = $this.SubnetMask
+#                             type = $this.Type
+#                         }                         
+#                        Add-NSIPResource @params -Confirm:$false
+#                     #    $switches {
+#                     #         ipaddress = $this.IPAddress
+#                     #         netmask = $this.SubnetMask
+#                     #         type = $this.Type
+#                     #         vserver = $this.VServer
+#                     #         telnet = $this.Telnet
+#                     #         ftp = $this.FTP
+#                     #         gui = $this.GUI
+#                     #         ssh = $this.SSH
+#                     #         snmp = $this.SNMP        
+#                     #         mgmtaccess = $this.mgmtaccess
+#                     #    }
+#                     #    Invoke-DscResource -Method set -ModuleName poshorigin_netscaler -Name LBNSIP -Property $switches
+#                     }
+#                 } 'Absent' {
+#                     if ($this.Ensure -ne $NSObject.Ensure) {
+#                         Disable-NSFeature -Name $this.Name -Confirm:$false
+#                         Write-Verbose -Message "Feature disabled: $($this.Name)"
+#                     }
+#                  }
+#               }   
+#         } catch {
+#             Write-Error 'There was a problem setting the resource'
+#             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+#             Write-Error $_
+#         }
+#         try {
+#             Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+#         } catch {
+#             # Do nothing
+#         }
+#     }
 
 
- [bool]Test() {
-        $pass = $true
-        $t = $null
-        $t = $this.Init()
-        $NSObject = $this.Get()
-        try {
-            switch ($this.Ensure) {
-                'Present' {
-                    if ($this.Ensure -eq $NSObject.Ensure) {                                                                        
-                        # # Run tests and set any needed attributes to match desired configuration
-                        if ($NSObject.ipaddress -ne $this.IPAddress) {
-                            Write-Verbose -Message "IPAddress does not match [$($NSObject.ipaddress) <> $($this.IPAddress)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.subnetmask -ne $this.SubnetMask) {
-                            Write-Verbose -Message "SubnetMask does not match [$($NSObject.subnetmask) <> $($this.SubnetMask)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.type -ne $this.Type) {
-                            Write-Verbose -Message "Type does not match [$($NSObject.type) <> $($this.Type)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.vserver -ne $this.VServer) {
-                            Write-Verbose -Message "VServer does not match [$($NSObject.vserver) <> $($this.VServer)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.telnet -ne $this.Telnet) {
-                            Write-Verbose -Message "Telnet does not match [$($NSObject.telnet) <> $($this.Telnet)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.ftp -ne $this.FTP) {
-                            Write-Verbose -Message "FTP does not match [$($NSObject.ftp) <> $($this.FTP)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.gui -ne $this.GUI) {
-                            Write-Verbose -Message "GUI does not match [$($NSObject.gui) <> $($this.GUI)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.ssh -ne $this.SSH) {
-                            Write-Verbose -Message "SSH does not match [$($NSObject.ssh) <> $($this.SSH)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.snmp -ne $this.SNMP) {
-                            Write-Verbose -Message "SNMP does not match [$($NSObject.snmp) <> $($this.SNMP)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.mgmtaccess -ne $this.MgmtAccess) {
-                            Write-Verbose -Message "MgmtAccess does not match [$($NSObject.mgmtaccess) <> $($this.MgmtAccess)]"
-                            $pass = $false
-                        }                             
-                    } else {
-                        $pass = $false
-                    }
-                } 'Absent' {
-                    if ($this.Ensure -ne $NSObject.Ensure) {
-                        $pass = $false
-                    } else {
-                        if ($NSObject.Name -eq "True") {
-                            $pass = $false
-                        }
-                    }
-                 }
-              }   
-        } catch {
-            Write-Error 'There was a problem testing the resource'
-            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
-            Write-Error $_
-        }
-        try {
-            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-        } catch {
-            # Do nothing
-        }
-        return $pass        
-    }
+#  [bool]Test() {
+#         $pass = $true
+#         $t = $null
+#         $t = $this.Init()
+#         $NSObject = $this.Get()
+#         try {
+#             switch ($this.Ensure) {
+#                 'Present' {
+#                     if ($this.Ensure -eq $NSObject.Ensure) {                                                                        
+#                         # # Run tests and set any needed attributes to match desired configuration
+#                         if ($NSObject.ipaddress -ne $this.IPAddress) {
+#                             Write-Verbose -Message "IPAddress does not match [$($NSObject.ipaddress) <> $($this.IPAddress)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.subnetmask -ne $this.SubnetMask) {
+#                             Write-Verbose -Message "SubnetMask does not match [$($NSObject.subnetmask) <> $($this.SubnetMask)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.type -ne $this.Type) {
+#                             Write-Verbose -Message "Type does not match [$($NSObject.type) <> $($this.Type)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.vserver -ne $this.VServer) {
+#                             Write-Verbose -Message "VServer does not match [$($NSObject.vserver) <> $($this.VServer)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.telnet -ne $this.Telnet) {
+#                             Write-Verbose -Message "Telnet does not match [$($NSObject.telnet) <> $($this.Telnet)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.ftp -ne $this.FTP) {
+#                             Write-Verbose -Message "FTP does not match [$($NSObject.ftp) <> $($this.FTP)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.gui -ne $this.GUI) {
+#                             Write-Verbose -Message "GUI does not match [$($NSObject.gui) <> $($this.GUI)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.ssh -ne $this.SSH) {
+#                             Write-Verbose -Message "SSH does not match [$($NSObject.ssh) <> $($this.SSH)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.snmp -ne $this.SNMP) {
+#                             Write-Verbose -Message "SNMP does not match [$($NSObject.snmp) <> $($this.SNMP)]"
+#                             $pass = $false
+#                         }
+#                         if ($NSObject.mgmtaccess -ne $this.MgmtAccess) {
+#                             Write-Verbose -Message "MgmtAccess does not match [$($NSObject.mgmtaccess) <> $($this.MgmtAccess)]"
+#                             $pass = $false
+#                         }                             
+#                     } else {
+#                         $pass = $false
+#                     }
+#                 } 'Absent' {
+#                     if ($this.Ensure -ne $NSObject.Ensure) {
+#                         $pass = $false
+#                     } else {
+#                         if ($NSObject.Name -eq "True") {
+#                             $pass = $false
+#                         }
+#                     }
+#                  }
+#               }   
+#         } catch {
+#             Write-Error 'There was a problem testing the resource'
+#             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+#             Write-Error $_
+#         }
+#         try {
+#             Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+#         } catch {
+#             # Do nothing
+#         }
+#         return $pass        
+#     }
 
-    [LBNSIP]Get() {
-        $t = $null
-        $t = $this.Init()
+#     [LBNSIP]Get() {
+#         $t = $null
+#         $t = $this.Init()
 
-        try {
-            $s = Get-NSIPResource -IPAddress $this.IPAddress -Verbose:$false -ErrorAction SilentlyContinue
-        } catch {
-            $s = $null
-        }
+#         try {
+#             $s = Get-NSIPResource -IPAddress $this.IPAddress -Verbose:$false -ErrorAction SilentlyContinue
+#         } catch {
+#             $s = $null
+#         }
 
-        $obj = [LBNSIP]::new()
-            $obj.IPAddress = $this.IPAddress
-            $obj.SubnetMask = $this.SubnetMask
-            $obj.Type = $this.Type
-            $obj.VServer = $this.VServer
-            $obj.Telnet = $this.Telnet
-            $obj.FTP = $this.FTP
-            $obj.GUI = $this.GUI
-            $obj.SSH = $this.SSH
-            $obj.SNMP = $this.SNMP
-            $obj.MgmtAccess = $this.MgmtAccess
-        if ($s) {
-                $obj.Ensure = [ensure]::Present
-                $obj.IPAddress = $s.ipaddress
-                $obj.SubnetMask = $s.netmask
-                $obj.Type = $s.type
-                $obj.VServer = $this.TestEnabledFeatures($s.VServer)
-                $obj.Telnet = $this.TestEnabledFeatures($s.Telnet)
-                $obj.FTP = $this.TestEnabledFeatures($s.FTP)
-                $obj.GUI = $this.TestEnabledFeatures($s.GUI)
-                $obj.SSH = $this.TestEnabledFeatures($s.SSH)
-                $obj.SNMP = $this.TestEnabledFeatures($s.SNMP)
-                $obj.MgmtAccess = $this.TestEnabledFeatures($s.MgmtAccess)
-        } else {
-            $obj.Ensure = [ensure]::Absent
-        }
-        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-        return $obj
-    }
+#         $obj = [LBNSIP]::new()
+#             $obj.IPAddress = $this.IPAddress
+#             $obj.SubnetMask = $this.SubnetMask
+#             $obj.Type = $this.Type
+#             $obj.VServer = $this.VServer
+#             $obj.Telnet = $this.Telnet
+#             $obj.FTP = $this.FTP
+#             $obj.GUI = $this.GUI
+#             $obj.SSH = $this.SSH
+#             $obj.SNMP = $this.SNMP
+#             $obj.MgmtAccess = $this.MgmtAccess
+#         if ($s) {
+#                 $obj.Ensure = [ensure]::Present
+#                 $obj.IPAddress = $s.ipaddress
+#                 $obj.SubnetMask = $s.netmask
+#                 $obj.Type = $s.type
+#                 $obj.VServer = $this.TestEnabledFeatures($s.VServer)
+#                 $obj.Telnet = $this.TestEnabledFeatures($s.Telnet)
+#                 $obj.FTP = $this.TestEnabledFeatures($s.FTP)
+#                 $obj.GUI = $this.TestEnabledFeatures($s.GUI)
+#                 $obj.SSH = $this.TestEnabledFeatures($s.SSH)
+#                 $obj.SNMP = $this.TestEnabledFeatures($s.SNMP)
+#                 $obj.MgmtAccess = $this.TestEnabledFeatures($s.MgmtAccess)
+#         } else {
+#             $obj.Ensure = [ensure]::Absent
+#         }
+#         Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+#         return $obj
+#     }
 
-    <#
-        Helper method to test switch/boolean options 
-    #>
-    [bool] TestEnabledFeatures([string] $Existing){
-        # $present = $true
-        if ($Existing -eq "ENABLED") {
-            $present = $true
-        } else {
-            $present = $false
-        }
-        return $present
-    }
-}
+#     <#
+#         Helper method to test switch/boolean options 
+#     #>
+#     [bool] TestEnabledFeatures([string] $Existing){
+#         # $present = $true
+#         if ($Existing -eq "ENABLED") {
+#             $present = $true
+#         } else {
+#             $present = $false
+#         }
+#         return $present
+#     }
+# }
 
 
 [DscResource()]
