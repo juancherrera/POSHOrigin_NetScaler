@@ -28,27 +28,27 @@ class LBVirtualServer {
     [string]$Comment = ''
 
     [DscProperty(Mandatory)]
-    [ValidateRange(1, 65534)]
+    [ValidateRange(0, 65534)]
     [int]$Port
 
     [DscProperty()]
-    [ValidateSet('DHCPRA','DIAMTER', 'DNS', 'DNS_TCP', 'DLTS', 'FTP', 'HTTP', 'MSSQL', 
-        'MYSQL', 'NNTP', 'PUSH','RADIUS', 'RDP', 'RTSP', 'SIP_UDP', 'SSL', 'SSL_BRIDGE', 
+    [ValidateSet('DHCPRA','DIAMTER', 'DNS', 'DNS_TCP', 'DLTS', 'FTP', 'HTTP', 'MSSQL',
+        'MYSQL', 'NNTP', 'PUSH','RADIUS', 'RDP', 'RTSP', 'SIP_UDP', 'SSL', 'SSL_BRIDGE',
         'SSL_DIAMETER', 'SSL_PUSH', 'SSL_TCP', 'TCP', 'TFTP', 'UDP')]
     [string]$ServiceType = 'HTTP'
 
     [DscProperty()]
-    [ValidateSet('ROUNDROBIN', 'LEASTCONNECTION', 'LEASTRESPONSETIME', 'LEASTBANDWIDTH', 
-        'LEASTPACKETS', 'CUSTOMLOAD', 'LRTM', 'URLHASH', 'DOMAINHASH', 'DESTINATIONIPHASH', 
+    [ValidateSet('ROUNDROBIN', 'LEASTCONNECTION', 'LEASTRESPONSETIME', 'LEASTBANDWIDTH',
+        'LEASTPACKETS', 'CUSTOMLOAD', 'LRTM', 'URLHASH', 'DOMAINHASH', 'DESTINATIONIPHASH',
         'SOURCEIPHASH', 'TOKEN', 'SRCIPDESTIPHASH', 'SRCIPSRCPORTHASH', 'CALLIDHASH')]
     [string]$LBMethod = 'ROUNDROBIN'
 
-    [DscProperty()]    
+    [DscProperty()]
     [ValidateSet('SOURCEIP', 'COOKIEINSERT', 'SSLSESSION', 'CUSTOMSERVERID', 'RULE', 'URLPASSIVE', 'DESTIP', 'SRCIPDESTIP', 'CALLID' ,'RTSPID', 'FIXSESSION', 'NONE')]
     [string]$PersistenceType = 'SOURCEIP'
 
     [DscProperty()]
-    [string]$HttpRedirectURL = ''
+    [string]$HttpRedirectURL
 
     [DscProperty()]
     [ValidateSet('PASSIVE', 'ACTIVE')]
@@ -56,6 +56,16 @@ class LBVirtualServer {
 
     [DscProperty()]
     [int]$TimeOut = 2
+
+    [DscProperty()]
+    [int]$ClientTimeout = 180
+
+    [DscProperty()]
+    [string]$BackupVServer
+
+    [DscProperty()]
+    [ValidateSet('ENABLED', 'DISABLED')]
+    [string]$RedirectPortRewrite = 'DISABLED'
 
     Init() {
         try {
@@ -90,32 +100,44 @@ class LBVirtualServer {
                     if ($NSObject.comment -ne $this.Comment) {
                         Write-Verbose -Message "Setting virtual server Comment [$($this.Comment)]"
                         Set-NSLBVirtualServer -Name $this.Name -Comment $this.Comment -Verbose:$false -Force
-                    }                    
+                    }
                     if ($NSObject.Port -ne $this.Port) {
                         Write-Warning -Message 'NetScaler does not support changing virtual server port on an existing virtual server. Virtual server must be deleted and recreated.'
                     }
                     if ($NSObject.ServiceType -ne $this.ServiceType) {
                         Write-Warning -Message 'NetScaler does not support changing virtual server service type on an existing virtual server. Virtual server must be deleted and recreated.'
                     }
-                    if ($NSObject.lbmethod -ne $this.LBMethod) { 
+                    if ($NSObject.lbmethod -ne $this.LBMethod) {
                         Set-NSLBVirtualServer -Name $this.Name -LBMethod $this.LBMethod -Verbose:$false -Force
                         Write-Verbose -Message "Setting virtual server load balance method [$($this.LBMethod)]"
                     }
-                    if ($NSObject.persistencetype -ne $this.PersistenceType) { 
+                    if ($NSObject.persistencetype -ne $this.PersistenceType) {
                         Set-NSLBVirtualServer -Name $this.Name -PersistenceType $this.PersistenceType -Verbose:$false -Force
                         Write-Verbose -Message "Setting virtual server persistence [$($this.PersistenceType)]"
                     }
-                    if ($NSObject.httpredirecturl -ne $this.HttpRedirectURL) { 
+                    if (($NSObject.httpredirectURL) -AND ($NSObject.httpredirecturl -ne $this.HttpRedirectURL)) {
                         Set-NSLBVirtualServer -Name $this.Name -HttpRedirectURL $this.HttpRedirectURL -Verbose:$false -Force
                         Write-Verbose -Message "Setting virtual server redirect [$($this.HttpRedirectURL)]"
-                    }                 
-                    if ($NSObject.icmpvsrresponse -ne $this.ICMPVSRResponse) { 
+                    }
+                    if ($NSObject.icmpvsrresponse -ne $this.ICMPVSRResponse) {
                         Set-NSLBVirtualServer -Name $this.Name -ICMPVSRResponse $this.ICMPVSRResponse -Verbose:$false -Force
                         Write-Verbose -Message "Setting virtual server icmpvsrresponse [$($this.ICMPVSRResponse)]"
                     }
-                    if ($NSObject.timeout -ne $this.TimeOut) { 
+                    if ($NSObject.timeout -ne $this.TimeOut) {
                         Set-NSLBVirtualServer -Name $this.Name -TimeOut $this.TimeOut -Verbose:$false -Force
                         Write-Verbose -Message "Setting virtual server timeout [$($this.TimeOut)]"
+                    }
+                    if ($NSObject.clienttimeout -ne $this.ClientTimeout) {
+                        Set-NSLBVirtualServer -Name $this.Name -ClientTimeout $this.ClientTimeout -Verbose:$false -Force
+                        Write-Verbose -Message "Setting virtual server client timeout [$($this.ClientTimeout)]"
+                    }
+                    if (($NSObject.backupvserver) -AND ($NSObject.backupvserver -ne $this.BackupVServer)) {
+                        Set-NSLBVirtualServer -Name $this.Name -BackupVServer $this.BackupVServer -Verbose:$false -Force
+                        Write-Verbose -Message "Setting virtual server BackupVServer [$($this.BackupVServer)]"
+                    }
+                    if ($NSObject.RedirectPortRewrite -ne $this.RedirectPortRewrite) {
+                        Set-NSLBVirtualServer -Name $this.Name -RedirectPortRewrite $this.RedirectPortRewrite -Verbose:$false -Force
+                        Write-Verbose -Message "Setting virtual server RedirectPortRewrite [$($this.RedirectPortRewrite)]"
                     }
                 } else {
                     Write-Verbose -Message "Creating virtual server [$($this.Name)]"
@@ -129,14 +151,21 @@ class LBVirtualServer {
                         ICMPVSRResponse = $this.ICMPVSRResponse
                         TimeOut = $this.TimeOut
                         Comment = $this.Comment
+                        RedirectPortRewrite = $this.RedirectPortRewrite
                     }
                     if ($null -ne $this.HttpRedirectURL) {
                         $params.HttpRedirectURL = $this.HttpRedirectURL
                     }
+                    if ($null -ne $this.ClientTimeout) {
+                        $params.ClientTimeout = $this.ClientTimeout
+                    }
+                    if ($null -ne $this.BackupVServer) {
+                        $params.BackupVServer = $this.BackupVServer
+                    }
                     New-NSLBVirtualServer @params -ErrorAction SilentlyContinue
                 }
             } 'Absent' {
-                try {   
+                try {
                     Write-Verbose -Message "Removing virtual server: $($this.Name)"
                     Remove-NSLBVirtualServer -Name $this.Name -Confirm:$false -Verbose:$false -Force
                 } catch {
@@ -144,6 +173,7 @@ class LBVirtualServer {
                 }
             }
           }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -170,7 +200,7 @@ class LBVirtualServer {
                         if ($NSObject.name -ne $this.Name) {
                             Write-Verbose -Message "Virtual server Name does not match [$($NSObject.name) <> $($this.Name)"
                             $pass = $false
-                        }    
+                        }
                         if ($NSObject.ipaddress -ne $this.IPAddress) {
                             Write-Verbose -Message "Virtual server IP address does not match [$($NSObject.ipaddress) <> $($this.IPAddress)"
                             $pass = $false
@@ -178,7 +208,7 @@ class LBVirtualServer {
                         if ($NSObject.comment -ne $this.Comment) {
                             Write-Verbose -Message "Virtual server Comment do not match [$($NSObject.comment) <> $($this.Comment)]"
                             $pass = $false
-                        }            
+                        }
                         if ($NSObject.port -ne $this.Port) {
                             Write-Verbose -Message "Virtual server port does not match [$($NSObject.port) <> $($this.Port)"
                             $pass = $false
@@ -187,26 +217,38 @@ class LBVirtualServer {
                             Write-Verbose -Message "Virtual server service type does not match [$($NSObject.servicetype) <> $($this.ServiceType)"
                             $pass = $false
                         }
-                        if ($NSObject.lbmethod -ne $this.LBMethod) { 
+                        if ($NSObject.lbmethod -ne $this.LBMethod) {
                             Write-Verbose -Message "Virtual server load balance method does not match [$($NSObject.lbmethod) <> $($this.LBMethod)"
                             $pass = $false
                         }
-                        if ($NSObject.persistencetype -ne $this.PersistenceType) { 
+                        if ($NSObject.persistencetype -ne $this.PersistenceType) {
                             Write-Verbose -Message "Virtual server Persistence Type does not match [$($NSObject.persistencetype) <> $($this.PersistenceType)"
                             $pass = $false
                         }
-                        if ($NSObject.ICMPVSRResponse -ne $this.ICMPVSRResponse) { 
+                        if ($NSObject.ICMPVSRResponse -ne $this.ICMPVSRResponse) {
                             Write-Verbose -Message "Virtual server ICMP Response does not match [$($NSObject.ICMPVSRResponse) <> $($this.ICMPVSRResponse)"
                             $pass = $false
-                        }                        
-                        if ($NSObject.httpredirectURL -ne $this.HTTPRedirectURL) { 
+                        }
+                        if (($NSObject.httpredirectURL) -AND ($NSObject.httpredirectURL -ne $this.HTTPRedirectURL)) {
                             Write-Verbose -Message "Virtual server HTTP Redirect does not match [$($NSObject.httpredirectURL) <> $($this.HTTPRedirectURL)"
                             $pass = $false
                         }
-                        if ($NSObject.timeout -ne $this.TimeOut) { 
+                        if ($NSObject.timeout -ne $this.TimeOut) {
                             Write-Verbose -Message "Virtual server Timeout does not match [$($NSObject.timeout) <> $($this.TimeOut)"
                             $pass = $false
-                        }                                                          
+                        }
+                        if ($NSObject.clienttimeout -ne $this.ClientTimeout) {
+                            Write-Verbose -Message "Virtual server Client Timeout does not match [$($NSObject.clienttimeout) <> $($this.ClientTimeout)"
+                            $pass = $false
+                        }
+                        if (($NSObject.backupvserver) -AND ($NSObject.backupvserver -ne $this.BackupVServer)) {
+                            Write-Verbose -Message "Virtual server Backup Server does not match [$($NSObject.backupvserver) <> $($this.BackupVServer)"
+                            $pass = $false
+                        }
+                        if ($NSObject.RedirectPortRewrite -ne $this.RedirectPortRewrite) {
+                            Write-Verbose -Message "RedirectPortRewrite does not match [$($NSObject.RedirectPortRewrite) <> $($this.RedirectPortRewrite)"
+                            $pass = $false
+                        }
                    } else {
                         Write-Verbose -Message "Resource [$($this.Name)] was not found"
                         $pass = $false
@@ -228,7 +270,7 @@ class LBVirtualServer {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBVirtualServer]Get() {
@@ -239,36 +281,42 @@ class LBVirtualServer {
         } catch {
             $s = $null
         }
-        
+
         $obj = [LBVirtualServer]::new()
         $obj.Name = $this.Name
         $obj.IPAddress = $this.IPAddress
         $obj.Port = $this.Port
         $obj.ServiceType = $this.ServiceType
-        $obj.Comment = $this.Comment      
+        $obj.Comment = $this.Comment
         $obj.LBMethod = $this.LBMethod
         $obj.PersistenceType = $this.PersistenceType
         $obj.HTTPRedirectURL = $this.HTTPRedirectURL
         $obj.ICMPVSRResponse = $this.ICMPVSRResponse
         $obj.TimeOut = $this.TimeOut
+        $obj.ClientTimeout = $this.ClientTimeout
+        $obj.BackupVServer = $this.BackupVServer
+        $obj.RedirectPortRewrite = $this.RedirectPortRewrite
         if ($s) {
             $obj.Ensure = [ensure]::Present
-            $obj.Name = $s.Name 
+            $obj.Name = $s.Name
             $obj.IPAddress = $s.ipv46
             $obj.Port = $s.port
             $obj.ServiceType = $s.servicetype
-            if ($s.comment) { $obj.Comment = $s.comment }            
+            $obj.Comment = $s.comment
             $obj.LBMethod = $s.lbmethod
             $obj.PersistenceType = $s.persistencetype
-            if ($s.redirurl) { $obj.HTTPRedirectURL = $s.redirurl }
-            $obj.ICMPVSRResponse = $s.icmpvsrresponse       
+            if ($s.redirurl) { $obj.HttpRedirectURL = $s.redirurl.toString() }
+            $obj.ICMPVSRResponse = $s.icmpvsrresponse
             $obj.TimeOut = $s.timeout
+            $obj.ClientTimeout = $s.clttimeout
+            if ($s.backupvserver) { $obj.BackupVServer = $s.backupvserver }
+            $s.RedirectPortRewrite = $s.RedirectPortRewrite
         } else {
             $obj.Ensure = [ensure]::Absent
         }
         Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
         return $obj
-    }    
+    }
 }
 
 [DscResource()]
@@ -296,9 +344,6 @@ class LBServer {
     [ValidateSet('ENABLED', 'DISABLED')]
     [string]$State = 'ENABLED'
 
-    [DscProperty()]
-    [bool]$ParameterExport = $false
-
     Init() {
         try {
             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
@@ -321,7 +366,11 @@ class LBServer {
         try {
             switch ($this.Ensure) {
             'Present' {
+
                 if ($NSObject.Ensure -eq [ensure]::Present) {
+                    if ($NSObject.name -ne $this.Name) {
+                        Write-Warning -Message 'NetScaler does not support changing virtual server name on an existing virtual server. Virtual server must be deleted and recreated.'
+                    }
                     if ($NSObject.ipaddress -ne $this.IPAddress) {
                         Write-Verbose -Message "Setting server IP [$($this.IPAddress)]"
                         Set-NSLBServer -Name $this.Name -IPAddress $this.IPAddress -Force -Verbose:$false
@@ -330,7 +379,7 @@ class LBServer {
                         Write-Verbose -Message "Setting server Comment [$($this.Comment)]"
                         Set-NSLBServer -Name $this.Name -Comment $this.Comment -Force -Verbose:$false
                     }
-                    if ($NSObject.state -ne $this.State) { 
+                    if ($NSObject.state -ne $this.State) {
                         Write-Verbose -Message "Setting server state [$($this.State)]"
                         if ($this.State -eq 'ENABLED') {
                             Enable-NSLBServer -Name $this.Name -Force -Verbose:$false
@@ -341,19 +390,15 @@ class LBServer {
                 } else {
                     Write-Verbose -Message "Creating server [$($this.Name)]"
                     $params = @{
-                        Name = $this.Name
-                        IPAddress = $this.IPAddress
-                        Comment = $this.Comment
-                        Confirm = $false
-                        Verbose = $false
+                        name = $this.Name
+                        ipaddress = $this.IPAddress
+                        comment = $this.Comment
+                        state = $this.State
                     }
-                    if ($null -ne $this.TrafficDomainId) {
-                        $params.TrafficDomainId = $this.TrafficDomainId
-                    }
-                    New-NSLBServer @params
+                    New-NSLBServer @params -Confirm:$false -Verbose:$false
                 }
             } 'Absent' {
-                try {   
+                try {
                     Write-Verbose -Message "Removing server: $($this.Name)"
                     Remove-NSLBServer -Name $this.Name -Confirm:$false -Verbose:$false -Force
                 } catch {
@@ -361,6 +406,7 @@ class LBServer {
                 }
             }
           }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -392,7 +438,7 @@ class LBServer {
                             Write-Verbose -Message "Server Comment does not match [$($NSObject.comment) <> $($this.Comment)]"
                             $pass = $false
                         }
-                        if ($NSObject.state -ne $this.State) { 
+                        if ($NSObject.state -ne $this.State) {
                             Write-Verbose -Message "Server state does not match [$($NSObject.state) <> $($this.State)]"
                             $pass = $false
                         }
@@ -416,7 +462,7 @@ class LBServer {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBServer]Get() {
@@ -427,20 +473,548 @@ class LBServer {
         } catch {
             $s = $null
         }
-        
+
         $obj = [LBServer]::new()
         $obj.Name = $this.Name
         $obj.IPAddress = $this.IPAddress
         $obj.Comment = $this.Comment
         $obj.State = $this.State
-        $obj.Credential = $this.Credential
-        $obj.NetScalerFQDN = $this.NetScalerFQDN
-        $obj.ParameterExport = $this.ParameterExport
         if ($s) {
             $obj.Ensure = [ensure]::Present
+            $obj.Name = $s.name
             $obj.IPAddress = $s.ipaddress
             $obj.Comment = $s.comment
             $obj.State = $s.state
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
+
+[DscResource()]
+class LBServiceGroup {
+    [DscProperty(Key)]
+    [string]$Name
+
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
+
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN
+
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
+
+    [DscProperty()]
+    [ValidateSet('ADNS','ADNS_TCP','ANY','DHCPRA','DIAMETER','DNS','DNS_TCP','DTLS','FTP','HTTP','MSSQL',
+    'MYSQL','NNTP','RADIUS','RDP','RPCSVR','RTSP','SIP_UDP','SNMP','SSL','SSL_BRIDGE','SSL_DIAMETER','SSL_TCP','TCP','TFTP','UDP')]
+    [Alias('Protocol')]
+    [string]$ServiceType = 'HTTP'
+
+    [DscProperty()]
+    [ValidateRange(0, 4094)]
+    [int]$TrafficDomainId = 0
+
+    [DscProperty()]
+    [ValidateSet('SERVER', 'FORWARD', 'TRANSPARENT', 'REVERSE')]
+    [string]$CacheType = 'SERVER'
+
+    [DscProperty()]
+    [ValidateSet('DISABLED', 'DNS', 'POLICY')]
+    [string]$AutoScale = 'DISABLED'
+
+    [DscProperty()]
+    [ValidateSet('YES','NO')]
+    [string]$Cacheable = 'NO'
+
+    [DscProperty()]
+    [ValidateSet('ENABLED', 'DISABLED')]
+    [string]$State = 'ENABLED'
+
+    [DscProperty()]
+    [ValidateSet('YES','NO')]
+    [string]$HealthMonitor = 'YES'
+
+    [DscProperty()]
+    [ValidateSet('DISABLED', 'ENABLED')]
+    [string]$AppFlowLog = 'ENABLED'
+
+    [DscProperty()]
+    [ValidateLength(0, 256)]
+    [string]$Comment = [string]::Empty
+
+    [DscProperty()]
+    [ValidateSet('ON', 'OFF')]
+    [string]$SureConnect = 'OFF'
+
+    [DscProperty()]
+    [ValidateSet('ON', 'OFF')]
+    [string]$SurgeProtection = 'OFF'
+
+    [DscProperty()]
+    [ValidateSet('YES','NO')]
+    [string]$UseProxyPort = 'YES'
+
+    [DscProperty()]
+    [ValidateSet('ENABLED','DISABLED')]
+    [string]$DownStateFlush = 'ENABLED'
+
+    [DscProperty()]
+    [ValidateSet('YES','NO')]
+    [string]$UseClientIP = "No"
+
+    [DscProperty()]
+    [ValidateSet('YES','NO')]
+    [string]$ClientKeepAlive = 'NO'
+
+    [DscProperty()]
+    [ValidateSet('YES','NO')]
+    [string]$TCPBuffering = 'NO'
+
+    # [DscProperty()]
+    # [ValidateSet('YES','NO')]
+    # [string]$HTTPCompression = 'YES'
+
+    [DscProperty()]
+    [ValidateSet('ENABLED','DISABLED')]
+    [string]$ClientIP = 'DISABLED'
+
+    [DscProperty()]
+    [string]$ClientIPHeader
+
+    [DscProperty()]
+    [ValidateRange(0, 4294967287)]
+    [int]$MaxBandwidthKbps
+
+    [DscProperty()]
+    [ValidateRange(0, 65535)]
+    [int]$MonitorThreshold
+
+    [DscProperty()]
+    [ValidateRange(0, 65535)]
+    [int]$MaxRequests
+
+    [DscProperty()]
+    [ValidateRange(0, 4294967294)]
+    [int]$MaxClients
+
+    [DscProperty()]
+    [ValidateRange(0, 31536000)]
+    [int]$ClientIdleTimeout = 180
+
+    [DscProperty()]
+    [ValidateRange(0, 31536000)]
+    [int]$ServerIdleTimeout = 360
+
+    Init() {
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+    }
+
+
+    [void]Set() {
+        $NSObject = $this.Get()
+        try {
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        if ($NSObject.Name -ne $this.Name) {
+                            Write-Warning -Message "Setting Name cannot be changed to [$($this.Name)], must be recreated"
+                        }
+                        if ($NSObject.ServiceType -ne $this.ServiceType) {
+                            Write-Warning -Message "Setting Service Type cannot be changed to [$($this.ServiceType)], must be recreated"
+                        }
+                        if ($NSObject.TrafficDomainId -ne $this.TrafficDomainId) {
+                            Write-Warning -Message "Setting Traffic Domain cannot be changed to [$($this.TrafficDomainId)]"
+                        }
+                        if ($NSObject.CacheType -ne $this.CacheType) {
+                            Write-Warning -Message "Setting Cache Type cannot be changed to[$($this.CacheType)]"
+                        }
+                        if ($NSObject.AutoScale -ne $this.AutoScale) {
+                            Write-Verbose -Message "Setting Autoscale [$($this.AutoScale)]"
+                            Set-NSLBServiceGroup -Name $this.Name -AutoScale $this.AutoScale -Force -Verbose:$false
+                        }
+                        if ($NSObject.Cacheable -ne $this.Cacheable) {
+                            Write-Verbose -Message "Setting Cacheable [$($this.Cacheable)]"
+                            Set-NSLBServiceGroup -Name $this.Name -Cacheable $this.Cacheable -Force -Verbose:$false
+                        }
+                        if ($NSObject.State -ne $this.State) {
+                            Write-Verbose -Message "Setting State [$($this.State)]"
+                            Set-NSLBServiceGroup -Name $this.Name -State $this.State -Force -Verbose:$false
+                        }
+                        if ($NSObject.HealthMonitor -ne $this.HealthMonitor) {
+                            Write-Verbose -Message "Setting Health Monitor [$($this.HealthMonitor)]"
+                            Set-NSLBServiceGroup -Name $this.Name -HealthMonitor $this.HealthMonitor -Force -Verbose:$false
+                        }
+                        if ($NSObject.AppFlowLog -ne $this.AppFlowLog) {
+                            Write-Verbose -Message "Setting AppFlowLog [$($this.AppFlowLog)]"
+                            Set-NSLBServiceGroup -Name $this.Name -AppFlowLog $this.AppFlowLog -Force -Verbose:$false
+                        }
+                        if ($NSObject.Comment -ne $this.Comment) {
+                            Write-Verbose -Message "Setting Comment [$($this.Comment)]"
+                            Set-NSLBServiceGroup -Name $this.Name -Comment $this.Comment -Force -Verbose:$false
+                        }
+                        if ($NSObject.SureConnect -ne $this.SureConnect) {
+                            Write-Verbose -Message "Setting SureConnect [$($this.SureConnect)]"
+                            Set-NSLBServiceGroup -Name $this.Name -SureConnect $this.SureConnect -Force -Verbose:$false
+                        }
+                        if ($NSObject.SurgeProtection -ne $this.SurgeProtection) {
+                            Write-Verbose -Message "Setting Surge Protection [$($this.SurgeProtection)]"
+                            Set-NSLBServiceGroup -Name $this.Name -SurgeProtection $this.SurgeProtection -Force -Verbose:$false
+                        }
+                        if ($NSObject.UseProxyPort -ne $this.UseProxyPort) {
+                            Write-Verbose -Message "Setting Use Proxy Port [$($this.UseProxyPort)]"
+                            Set-NSLBServiceGroup -Name $this.Name -UseProxyPort $this.UseProxyPort -Force -Verbose:$false
+                        }
+                        if ($NSObject.DownStateFlush -ne $this.DownStateFlush) {
+                            Write-Verbose -Message "Setting DownState Flush [$($this.DownStateFlush)]"
+                            Set-NSLBServiceGroup -Name $this.Name -DownStateFlush $this.DownStateFlush -Force -Verbose:$false
+                        }
+                        if ($NSObject.UseClientIP -ne $this.UseClientIP) {
+                            Write-Verbose -Message "Setting Use Client IP [$($this.UseClientIP)]"
+                            Set-NSLBServiceGroup -Name $this.Name -UseClientIP $this.UseClientIP -Force -Verbose:$false
+                        }
+                        if ($NSObject.ClientKeepAlive -ne $this.ClientKeepAlive) {
+                            Write-Verbose -Message "Setting Client Keep Alive [$($this.ClientKeepAlive)]"
+                            Set-NSLBServiceGroup -Name $this.Name -ClientKeepAlive $this.ClientKeepAlive -Force -Verbose:$false
+                        }
+                        if ($NSObject.TCPBuffering -ne $this.TCPBuffering) {
+                            Write-Verbose -Message "Setting TCP Buffering [$($this.TCPBuffering)]"
+                            Set-NSLBServiceGroup -Name $this.Name -TCPBuffering $this.TCPBuffering -Force -Verbose:$false
+                        }
+                        # if ($NSObject.HTTPCompression -ne $this.HTTPCompression) {
+                        #     Write-Verbose -Message "Setting HTTP Compression [$($this.HTTPCompression)]"
+                        #     Set-NSLBServiceGroup -Name $this.Name -HTTPCompression $this.HTTPCompression -Force -Verbose:$false
+                        # }
+                        if ($NSObject.ClientIP -ne $this.ClientIP) {
+                            Write-Verbose -Message "Setting Client IP [$($this.ClientIP)]"
+                            Set-NSLBServiceGroup -Name $this.Name -ClientIP $this.ClientIP -Force -Verbose:$false
+                        }
+                        if ($NSObject.MaxBandwidthKbps -ne $this.MaxBandwidthKbps) {
+                            Write-Verbose -Message "Setting Maximum Bandwidth (Kbps) [$($this.MaxBandwidthKbps)]"
+                            Set-NSLBServiceGroup -Name $this.Name -MaxBandwidthKbps $this.MaxBandwidthKbps -Force -Verbose:$false
+                        }
+                        if ($NSObject.MonitorThreshold -ne $this.MonitorThreshold) {
+                            Write-Verbose -Message "Setting Monitor Threshold [$($this.MonitorThreshold)]"
+                            Set-NSLBServiceGroup -Name $this.Name -MonitorThreshold $this.MonitorThreshold -Force -Verbose:$false
+                        }
+                        if ($NSObject.MaxRequests -ne $this.MaxRequests) {
+                            Write-Verbose -Message "Setting Maximum Client Requests [$($this.MaxRequests)]"
+                            Set-NSLBServiceGroup -Name $this.Name -MaxRequests $this.MaxRequests -Force -Verbose:$false
+                        }
+                        if ($NSObject.MaxClients -ne $this.MaxClients) {
+                            Write-Verbose -Message "Setting Maximum Client connections [$($this.MaxClients)]"
+                            Set-NSLBServiceGroup -Name $this.Name -MaxClients $this.MaxClients -Force -Verbose:$false
+                        }
+                        if ($NSObject.ClientIdleTimeout -ne $this.ClientIdleTimeout) {
+                            Write-Verbose -Message "Setting Client Idle Timeout [$($this.ClientIdleTimeout)]"
+                            Set-NSLBServiceGroup -Name $this.Name -ClientIdleTimeout $this.ClientIdleTimeout -Force -Verbose:$false
+                        }
+                        if ($NSObject.ServerIdleTimeout -ne $this.ServerIdleTimeout) {
+                            Write-Verbose -Message "Setting Server Idle Timeout [$($this.ServerIdleTimeout)]"
+                            Set-NSLBServiceGroup -Name $this.Name -ServerIdleTimeout $this.ServerIdleTimeout -Force -Verbose:$false
+                        }
+                    } else {
+                        Write-Verbose -Message "Creating Service Group [$($this.Name)]"
+                        $params = @{
+                            name = $this.Name
+                            servicetype = $this.ServiceType
+                            state = $this.State
+                            comment = $this.Comment
+                        }
+                        if ($PSBoundParameters.ContainsKey('TrafficDomainId')) {
+                            $params.Add('TrafficDomainId', $this.TrafficDomainId)
+                        }
+                        if ($PSBoundParameters.ContainsKey('MaxClients')) {
+                            $params.Add('MaxClients', $this.MaxClients)
+                        }
+                        if ($PSBoundParameters.ContainsKey('CacheType')) {
+                            $params.Add('CacheType', $this.CacheType)
+                        }
+                        if ($PSBoundParameters.ContainsKey('AutoScale')) {
+                            $params.Add('AutoScale', $this.AutoScale)
+                        }
+                        if ($PSBoundParameters.ContainsKey('Cacheable')) {
+                            $params.Add('Cacheable', $this.Cacheable)
+                        }
+                        if ($PSBoundParameters.ContainsKey('HealthMonitor')) {
+                            $params.Add('HealthMonitor', $this.HealthMonitor)
+                        }
+                        if ($PSBoundParameters.ContainsKey('AppFlowLog')) {
+                            $params.Add('AppFlowLog', $this.AppFlowLog)
+                        }
+                        if ($PSBoundParameters.ContainsKey('SureConnect')) {
+                            $params.Add('SureConnect', $this.SureConnect)
+                        }
+                        if ($PSBoundParameters.ContainsKey('SurgeProtection')) {
+                            $params.Add('SurgeProtection', $this.SurgeProtection)
+                        }
+                        if ($PSBoundParameters.ContainsKey('UseProxyPort')) {
+                            $params.Add('UseProxyPort', $this.UseProxyPort)
+                        }
+                        if ($PSBoundParameters.ContainsKey('DownStateFlush')) {
+                            $params.Add('DownStateFlush', $this.DownStateFlush)
+                        }
+                        if ($PSBoundParameters.ContainsKey('UseClientIP')) {
+                            $params.Add('UseClientIP', $this.UseClientIP)
+                        }
+                        if ($PSBoundParameters.ContainsKey('ClientKeepAlive')) {
+                            $params.Add('ClientKeepAlive', $this.ClientKeepAlive)
+                        }
+                        if ($PSBoundParameters.ContainsKey('TCPBuffering')) {
+                            $params.Add('TCPBuffering', $this.TCPBuffering)
+                        }
+                        # if ($PSBoundParameters.ContainsKey('HTTPCompression')) {
+                        #     $params.Add('HTTPCompression', $this.HTTPCompression)
+                        # }
+                        if ($PSBoundParameters.ContainsKey('ClientIP')) {
+                            $params.Add('ClientIP', $this.ClientIP)
+                        }
+                        if ($PSBoundParameters.ContainsKey('MaxBandwidthKbps')) {
+                            $params.Add('MaxBandwidthKbps', $this.MaxBandwidthKbps)
+                        }
+                        if ($PSBoundParameters.ContainsKey('DownStateFlush')) {
+                            $params.Add('DownStateFlush', $this.DownStateFlush)
+                        }
+                        if ($PSBoundParameters.ContainsKey('MaxRequests')) {
+                            $params.Add('MaxRequests', $this.MaxRequests)
+                        }
+                        if ($PSBoundParameters.ContainsKey('ClientIdleTimeout')) {
+                            $params.Add('ClientIdleTimeout', $this.ClientIdleTimeout)
+                        }
+                        if ($PSBoundParameters.ContainsKey('ServerIdleTimeout')) {
+                            $params.Add('ServerIdleTimeout', $this.ServerIdleTimeout)
+                        }
+                        New-NSLBServiceGroup @params -ErrorAction SilentlyContinue
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        Remove-NSLBServiceGroup -Name $NSObject.Name -Confirm:$false -ErrorAction SilentlyContinue
+                        Write-Verbose -Message "Removing Netscaler monitor: $($this.Name)"
+                    }
+                }
+            }
+        Save-NSConfig
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
+
+    [bool]Test() {
+        $pass = $true
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        if ($NSObject.Name -ne $this.Name) {
+                            Write-Verbose -Message "Service Group Name doest not match [$($NSObject.Name) <> $($this.Name)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.ServiceType -ne $this.ServiceType) {
+                            Write-Verbose -Message "Service Type does not match [$($NSObject.ServiceType) <> $($this.ServiceType)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.TrafficDomainId -ne $this.TrafficDomainId) {
+                            Write-Verbose -Message "Traffic Domain does not match [$($NSObject.TrafficDomainId) <> $($this.TrafficDomainId)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.CacheType -ne $this.CacheType) {
+                            Write-Verbose -Message "Cache Type does not match [$($NSObject.CacheType) <> $($this.CacheType)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.Cacheable -ne $this.Cacheable) {
+                            Write-Verbose -Message "Cacheable setting does not match [$($NSObject.Cacheable) <> $($this.Cacheable)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.State -ne $this.State) {
+                            Write-Verbose -Message "State does not match [$($NSObject.State) <> $($this.State)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.HealthMonitor -ne $this.HealthMonitor) {
+                            Write-Verbose -Message "Health Monitor does not match [$($NSObject.HealthMonitor) <> $($this.HealthMonitor)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.AppFlowLog -ne $this.AppFlowLog) {
+                            Write-Verbose -Message "AppFlowLog does not match [$($NSObject.AppFlowLog) <> $($this.AppFlowLog)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.Comment -ne $this.Comment) {
+                            Write-Verbose -Message "Comment does not match [$($NSObject.Comment) <> $($this.Comment)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.SurgeProtection -ne $this.SurgeProtection) {
+                            Write-Verbose -Message "Surge Protection does not match [$($NSObject.SurgeProtection) <> $($this.SurgeProtection)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.SureConnect -ne $this.SureConnect) {
+                            Write-Verbose -Message "Sure Connect does not match [$($NSObject.SureConnect) <> $($this.SureConnect)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.UseProxyPort -ne $this.UseProxyPort) {
+                            Write-Verbose -Message "Use Proxy Port does not match [$($NSObject.UseProxyPort) <> $($this.UseProxyPort)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.DownStateFlush -ne $this.DownStateFlush) {
+                            Write-Verbose -Message "DownState Flush does not match [$($NSObject.DownStateFlush) <> $($this.DownStateFlush)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.UseClientIP -ne $this.UseClientIP) {
+                            Write-Verbose -Message "Use Client IP does not match [$($NSObject.UseClientIP) <> $($this.UseClientIP)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.ClientKeepAlive -ne $this.ClientKeepAlive) {
+                            Write-Verbose -Message "Client Keep Alive does not match [$($NSObject.ClientKeepAlive) <> $($this.ClientKeepAlive)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.TCPBuffering -ne $this.TCPBuffering) {
+                            Write-Verbose -Message "TCP Buffering does not match [$($NSObject.TCPBuffering) <> $($this.TCPBuffering)]"
+                            $pass = $false
+                        }
+                        # if ($NSObject.HTTPCompression -ne $this.HTTPCompression) {
+                        #     Write-Verbose -Message "HTTP Compression does not match [$($NSObject.HTTPCompression) <> $($this.HTTPCompression)]"
+                        #     $pass = $false
+                        # }
+                        if ($NSObject.ClientIP -ne $this.ClientIP) {
+                            Write-Verbose -Message "Client IP does not match [$($NSObject.ClientIP) <> $($this.ClientIP)]"
+                            $pass = $false
+                        }
+                        # if ($NSObject.ClientIPHeader -ne $this.ClientIPHeader) {
+                        #     Write-Verbose -Message "ClientIP Header does not match [$($this.ClientIPHeader)]"
+                        #     $pass = $false
+                        # }
+                        if ($NSObject.MaxBandwidthKbps -ne $this.MaxBandwidthKbps) {
+                            Write-Verbose -Message "Maximum Banddwith (Kbps) does not match [$($NSObject.MaxBandwidthKbps) <> $($this.MaxBandwidthKbps)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.MonitorThreshold -ne $this.MonitorThreshold) {
+                            Write-Verbose -Message "Monitor Threshold does not match [$($NSObject.MonitorThreshold) <> $($this.MonitorThreshold)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.MaxRequests -ne $this.MaxRequests) {
+                            Write-Verbose -Message "Maximum Client Requests does not match [$($NSObject.MaxRequests) <> $($this.MaxRequests)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.MaxClients -ne $this.MaxClients) {
+                            Write-Verbose -Message "Maximum Client connections does not match [$($NSObject.MaxClients) <> $($this.MaxClients)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.ClientIdleTimeout -ne $this.ClientIdleTimeout) {
+                            Write-Verbose -Message "Client Idle Timeout does not match [$($NSObject.ClientIdleTimeout) <> $($this.ClientIdleTimeout)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.ServerIdleTimeout -ne $this.ServerIdleTimeout) {
+                            Write-Verbose -Message "Server Idle Timeout does not match [$($NSObject.ServerIdleTimeout) <> $($this.ServerIdleTimeout)]"
+                            $pass = $false
+                        }
+                    } else {
+                        Write-Verbose -Message "Resource [$($this.Name)] was not found"
+                        $pass = $false
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        $pass = $false
+                    }
+                }
+            }
+        } catch {
+            Write-Error 'There was a problem testing the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+        return $pass
+    }
+
+    [LBServiceGroup]Get() {
+        $t = $null
+        $t = $this.Init()
+
+        try {
+            $s = Get-NSLBServiceGroup -Name $this.Name -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            $s = $null
+        }
+
+        $obj = [LBServiceGroup]::new()
+        $obj.Name = $this.Name
+        $obj.ServiceType = $this.ServiceType
+        $obj.TrafficDomainID = $this.TrafficDomainID
+        $obj.CacheType = $this.CacheType
+        $obj.MaxClients = $this.MaxClients
+        $obj.MaxRequests = $this.MaxRequests
+        $obj.Cacheable = $this.Cacheable
+        $obj.ClientIP = $this.ClientIP
+        $obj.UseClientIP = $this.UseClientIP
+        $obj.UseProxyPort = $this.UseProxyPort
+        $obj.SureConnect = $this.SureConnect
+        $obj.SurgeProtection = $this.SurgeProtection
+        $obj.ClientKeepAlive = $this.ClientKeepAlive
+        $obj.ClientIdleTimeout = $this.ClientIdleTimeout
+        $obj.ServerIdleTimeout = $this.ServerIdleTimeout
+        $obj.TCPBuffering = $this.TCPBuffering
+        # $obj.HTTPCompression = $this.HTTPCompression
+        $obj.MaxBandwidthKbps = $this.MaxBandwidthKbps
+        $obj.State = $this.State
+        $obj.DownStateFlush = $this.DownStateFlush
+        $obj.HealthMonitor = $this.HealthMonitor
+        $obj.AppFlowLog = $this.AppFlowLog
+        $obj.Comment = $this.Comment
+        # $obj.ClientIPHeader = $this.ClientIPHeader
+        $obj.MonitorThreshold = $this.MonitorThreshold
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.Name = $s.servicegroupname
+            $obj.ServiceType = $s.servicetype
+            $obj.TrafficDomainID = $s.td
+            $obj.CacheType = $s.cachetype
+            $obj.MaxClients = $s.maxclient
+            $obj.MaxRequests = $s.maxreq
+            $obj.Cacheable = $s.cacheable
+            $obj.ClientIP = $s.cip
+            $obj.UseClientIP = $s.usip
+            $obj.UseProxyPort = $s.useproxyport
+            $obj.SureConnect = $s.sc
+            $obj.SurgeProtection = $s.sp
+            $obj.ClientKeepAlive = $s.cka
+            $obj.ClientIdleTimeout = $s.clttimeout
+            $obj.ServerIdleTimeout = $s.svrtimeout
+            $obj.TCPBuffering = $s.tcpb
+            # $obj.HTTPCompression = $s.cmp
+            $obj.MaxBandwidthKbps = $s.maxbandwidth
+            $obj.State = $s.state.toUpper()
+            $obj.DownStateFlush = $s.downstateflush
+            $obj.HealthMonitor = $s.healthmonitor
+            $obj.AppFlowLog = $s.appflowlog
+            $obj.Comment = $s.comment
+            # $obj.ClientIPHeader = $s.cipheader
+            $obj.MonitorThreshold = $s.monthreshold
         } else {
             $obj.Ensure = [ensure]::Absent
         }
@@ -458,8 +1032,8 @@ class LBMonitor {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -474,7 +1048,7 @@ class LBMonitor {
     [DscProperty(Mandatory)]
     [ValidateRange(1, 20940000)]
     [int]$Interval = 5
-    
+
     [DscProperty(Mandatory)]
     [ValidateSet('SEC', 'MSEC', 'MIN')]
     [string]$IntervalType = 'SEC'
@@ -495,7 +1069,6 @@ class LBMonitor {
     [ValidateSet('SEC', 'MSEC', 'MIN')]
     [string]$DowntimeType = 'SEC'
 
-    [DscProperty(Mandatory)]
     [DscProperty()]
     [int]$DestinationPort
 
@@ -591,7 +1164,7 @@ class LBMonitor {
 
     [DscProperty()]
     [bool]$ParameterExport = $false
-    
+
     Init() {
         try {
             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
@@ -685,11 +1258,11 @@ class LBMonitor {
                         Write-Verbose -Message "Setting Failure Retries was changed to [$($this.FailureRetries)]"
                         Set-NSLBMonitor -Name $this.Name -FailureRetries $this.FailureRetries -Verbose:$false -ErrorAction SilentlyContinue
                     }
-                    if ($NSObject.destport -ne $this.DestinationPort) {
+                    if ($NSObject.destinationport -ne $this.DestinationPort) {
                         Write-Verbose -Message "Setting Destination Port was changed to [$($this.DestinationPort)]"
                         Set-NSLBMonitor -Name $this.Name -DestinationPort $this.DestinationPort -Verbose:$false -ErrorAction SilentlyContinue
                     }
-                    if ($NSObject.respcode -ne $this.ResponseCode) {
+                    if ($NSObject.responsecode -ne $this.ResponseCode) {
                         Write-Verbose -Message "Setting Response Code was changed to [$($this.ResponseCode)]"
                         try {
                             Set-NSLBMonitor -Name $this.Name -ResponseCode $this.ResponseCode -Verbose:$false -ErrorAction SilentlyContinue
@@ -714,13 +1287,15 @@ class LBMonitor {
                         successretries = $this.SuccessRetries
                         failureRetries = $this.FailureRetries
                         state = $this.State
-                        destinationport = $this.DestinationPort
                         destinationip = $this.DestinationIP
                         reverse = $this.Reverse
                         lrtm = $this.LRTM
                         transparent = $this.Transparent
                         tos = $this.TOS
                         secure = $this.Secure
+                    }
+                    if ($PSBoundParameters.ContainsKey('DestinationPort')) {
+                        $params.Add('DestinationPort', $this.DestinationPort)
                     }
                     if ($PSBoundParameters.ContainsKey('Transparent')) {
                         $params.Add('Transparent', $this.Transparent)
@@ -733,13 +1308,13 @@ class LBMonitor {
                     }
                     if ($PSBoundParameters.ContainsKey('IPTunnel')) {
                         $params.Add('IPTunnel', $this.IPTunnel)
-                    }          
+                    }
                     if ($PSBoundParameters.ContainsKey('TOS')) {
                         $params.Add('TOS', $this.TOS)
                     }
                     if ($PSBoundParameters.ContainsKey('Reverse')) {
                         $params.Add('Reverse', $this.Reverse)
-                    }        
+                    }
                     if ($PSBoundParameters.ContainsKey('DestinationIP')) {
                         $params.Add('DestinationIP', $this.DestinationIP)
                     }
@@ -798,14 +1373,15 @@ class LBMonitor {
                     $params = @{
                         name = $this.Name
                         type = $this.Type
-                    }     
+                    }
                     Remove-NSLBMonitor @params -Confirm:$false -ErrorAction SilentlyContinue
                     Write-Verbose -Message "Removing Netscaler monitor: $($this.Name)"
                 } catch {
                     write-host "Monitor $this.Name was not found"
                 }
             }
-            }#
+        }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -932,7 +1508,7 @@ class LBMonitor {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBMonitor]Get() {
@@ -989,7 +1565,7 @@ class LBMonitor {
             $obj.IPTunnel = $s.iptunnel
             $obj.FailureRetries = $s.failureretries
             $obj.DestinationPort = $s.destport
-            $obj.HTTPRequest = $s.httprequest  
+            $obj.HTTPRequest = $s.httprequest
         } else {
             $obj.Ensure = [ensure]::Absent
         }
@@ -999,119 +1575,32 @@ class LBMonitor {
 }
 
 [DscResource()]
-class LBServiceGroup {
+class LBServiceGroupMonitorBinding {
     [DscProperty(Key)]
-    [string]$Name
+    [string]$ServiceGroupName
 
     [DscProperty()]
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
-    [DscProperty()]
-    [ValidateSet('ADNS','ADNS_TCP','ANY','DHCPRA','DIAMETER','DNS','DNS_TCP','DTLS','FTP','HTTP','MSSQL',
-    'MYSQL','NNTP','RADIUS','RDP','RPCSVR','RTSP','SIP_UDP','SNMP','SSL','SSL_BRIDGE','SSL_DIAMETER','SSL_TCP','TCP','TFTP','UDP')]
-    [Alias('Protocol')]
-    [string]$ServiceType = 'HTTP'
+    [DscProperty(Mandatory)]
+    [string]$MonitorName
 
     [DscProperty()]
-    [ValidateRange(0, 4094)]
-    [int]$TrafficDomainId = 0
+    [ValidateSet('Enabled','Disabled')]
+    [string]$State = 'Enabled'
 
     [DscProperty()]
-    [ValidateSet('SERVER', 'FORWARD', 'TRANSPARENT', 'REVERSE')]
-    [string]$CacheType = 'SERVER'
+    [int]$Weight = 1
 
     [DscProperty()]
-    [ValidateSet('DISABLED', 'DNS', 'POLICY')]
-    [string]$AutoScale = 'DISABLED'
+    [int]$Port
 
-    [DscProperty()]
-    [ValidateSet('YES','NO')]
-    [string]$Cacheable = 'NO'
-    
-    [DscProperty()]
-    [ValidateSet('ENABLED', 'DISABLED')]
-    [string]$State = 'ENABLED'
-
-    [DscProperty()]
-    [ValidateSet('YES','NO')]
-    [string]$HealthMonitor = 'YES'
-
-    [DscProperty()]
-    [ValidateSet('DISABLED', 'ENABLED')]
-    [string]$AppFlowLog = 'ENABLED'
-
-    [DscProperty()]
-    [ValidateLength(0, 256)]
-    [string]$Comment = [string]::Empty
-
-    [DscProperty()]
-    [ValidateSet('ON', 'OFF')]
-    [string]$SureConnect = 'OFF'
-
-    [DscProperty()]
-    [ValidateSet('ON', 'OFF')]
-    [string]$SurgeProtection = 'OFF'
-
-    [DscProperty()]
-    [ValidateSet('YES','NO')]
-    [string]$UseProxyPort = 'YES'
-
-    [DscProperty()]
-    [ValidateSet('ENABLED','DISABLED')]
-    [string]$DownStateFlush = 'ENABLED'
-
-    [DscProperty()]
-    [ValidateSet('YES','NO')]
-    [string]$UseClientIP = "No"
-
-    [DscProperty()]
-    [ValidateSet('YES','NO')]
-    [string]$ClientKeepAlive = 'NO'
-
-    [DscProperty()]
-    [ValidateSet('YES','NO')]
-    [string]$TCPBuffering = 'NO'
-
-    [DscProperty()]
-    [ValidateSet('YES','NO')]
-    [string]$HTTPCompression = 'YES'
-
-    [DscProperty()]
-    [ValidateSet('ENABLED','DISABLED')]
-    [string]$ClientIP = 'DISABLED'
-
-    [DscProperty()]
-    [string]$ClientIPHeader
-
-    [DscProperty()]
-    [ValidateRange(0, 4294967287)]
-    [int]$MaxBandwidthKbps
-
-    [DscProperty()]
-    [ValidateRange(0, 65535)]
-    [int]$MonitorThreshold
-
-    [DscProperty()]
-    [ValidateRange(0, 65535)]
-    [int]$MaxRequests
-
-    [DscProperty()]
-    [ValidateRange(0, 4294967294)]
-    [int]$MaxClients
-
-    [DscProperty()]
-    [ValidateRange(0, 31536000)]
-    [int]$ClientIdleTimeout = 180
-
-    [DscProperty()]
-    [ValidateRange(0, 31536000)]
-    [int]$ServerIdleTimeout = 360
 
     Init() {
         try {
@@ -1122,195 +1611,62 @@ class LBServiceGroup {
         }
     }
 
-
     [void]Set() {
+        $t = $null
+        $t = $this.Init()
         $NSObject = $this.Get()
+
         try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
         } catch {
             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
         }
+
         try {
             switch ($this.Ensure) {
                 'Present' {
                     if ($this.Ensure -eq $NSObject.Ensure) {
-                        if ($NSObject.Name -ne $this.Name) {
-                            Write-Warning -Message "Setting Name cannot be changed to [$($this.Name)], must be recreated"
-                        }                        
-                        if ($NSObject.ServiceType -ne $this.ServiceType) {
-                            Write-Warning -Message "Setting Service Type cannot be changed to [$($this.ServiceType)], must be recreated"
-                        }                        
-                        if ($NSObject.TrafficDomainId -ne $this.TrafficDomainId) {
-                            Write-Warning -Message "Setting Traffic Domain cannot be changed to [$($this.TrafficDomainId)]"
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.ServiceGroupName -ne $this.ServiceGroupName) {
+                            Write-Warning -Message "Setting ServiceGroupName [$($this.ServiceGroupName)] does not match, rebinding"
+                            Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
                         }
-                        if ($NSObject.CacheType -ne $this.CacheType) {
-                            Write-Warning -Message "Setting Cache Type cannot be changed to[$($this.CacheType)]"
+                        if ($NSObject.MonitorName -ne $this.MonitorName) {
+                            Write-Warning -Message "Setting MonitorName [$($this.MonitorName)] does not match, rebinding"
+                            Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
                         }
-                        if ($NSObject.AutoScale -ne $this.AutoScale) {
-                            Write-Verbose -Message "Setting Autoscale [$($this.AutoScale)]"
-                            Set-NSLBServiceGroup -Name $this.Name -AutoScale $this.AutoScale -Force -Verbose:$false
-                        }
-                        if ($NSObject.Cacheable -ne $this.Cacheable) {
-                            Write-Verbose -Message "Setting Cacheable [$($this.Cacheable)]"
-                            Set-NSLBServiceGroup -Name $this.Name -Cacheable $this.Cacheable -Force -Verbose:$false
+                        if ($NSObject.Weight -ne $this.Weight) {
+                            Write-Warning -Message "Setting Weight [$($this.Weight)] does not match, rebinding"
+                            Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
                         }
                         if ($NSObject.State -ne $this.State) {
-                            Write-Verbose -Message "Setting State [$($this.State)]"
-                            Set-NSLBServiceGroup -Name $this.Name -State $this.State -Force -Verbose:$false
+                            Write-Warning -Message "Setting State [$($this.State)] does not match, rebinding"
+                            Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
                         }
-                        if ($NSObject.HealthMonitor -ne $this.HealthMonitor) {
-                            Write-Verbose -Message "Setting Health Monitor [$($this.HealthMonitor)]"
-                            Set-NSLBServiceGroup -Name $this.Name -HealthMonitor $this.HealthMonitor -Force -Verbose:$false
-                        }
-                        if ($NSObject.AppFlowLog -ne $this.AppFlowLog) {
-                            Write-Verbose -Message "Setting AppFlowLog [$($this.AppFlowLog)]"
-                            Set-NSLBServiceGroup -Name $this.Name -AppFlowLog $this.AppFlowLog -Force -Verbose:$false
-                        }
-                        if ($NSObject.Comment -ne $this.Comment) {
-                            Write-Verbose -Message "Setting Comment [$($this.Comment)]"
-                            Set-NSLBServiceGroup -Name $this.Name -Comment $this.Comment -Force -Verbose:$false
-                        }
-                        if ($NSObject.SureConnect -ne $this.SureConnect) {
-                            Write-Verbose -Message "Setting SureConnect [$($this.SureConnect)]"
-                            Set-NSLBServiceGroup -Name $this.Name -SureConnect $this.SureConnect -Force -Verbose:$false
-                        }
-                        if ($NSObject.SurgeProtection -ne $this.SurgeProtection) {
-                            Write-Verbose -Message "Setting Surge Protection [$($this.SurgeProtection)]"
-                            Set-NSLBServiceGroup -Name $this.Name -SurgeProtection $this.SurgeProtection -Force -Verbose:$false
-                        }
-                        if ($NSObject.UseProxyPort -ne $this.UseProxyPort) {
-                            Write-Verbose -Message "Setting Use Proxy Port [$($this.UseProxyPort)]"
-                            Set-NSLBServiceGroup -Name $this.Name -UseProxyPort $this.UseProxyPort -Force -Verbose:$false
-                        }
-                        if ($NSObject.DownStateFlush -ne $this.DownStateFlush) {
-                            Write-Verbose -Message "Setting DownState Flush [$($this.DownStateFlush)]"
-                            Set-NSLBServiceGroup -Name $this.Name -DownStateFlush $this.DownStateFlush -Force -Verbose:$false
-                        }
-                        if ($NSObject.UseClientIP -ne $this.UseClientIP) {
-                            Write-Verbose -Message "Setting Use Client IP [$($this.UseClientIP)]"
-                            Set-NSLBServiceGroup -Name $this.Name -UseClientIP $this.UseClientIP -Force -Verbose:$false
-                        }
-                        if ($NSObject.ClientKeepAlive -ne $this.ClientKeepAlive) {
-                            Write-Verbose -Message "Setting Client Keep Alive [$($this.ClientKeepAlive)]"
-                            Set-NSLBServiceGroup -Name $this.Name -ClientKeepAlive $this.ClientKeepAlive -Force -Verbose:$false
-                        }
-                        if ($NSObject.TCPBuffering -ne $this.TCPBuffering) {
-                            Write-Verbose -Message "Setting TCP Buffering [$($this.TCPBuffering)]"
-                            Set-NSLBServiceGroup -Name $this.Name -TCPBuffering $this.TCPBuffering -Force -Verbose:$false
-                        }
-                        if ($NSObject.HTTPCompression -ne $this.HTTPCompression) {
-                            Write-Verbose -Message "Setting HTTP Compression [$($this.HTTPCompression)]"
-                            Set-NSLBServiceGroup -Name $this.Name -HTTPCompression $this.HTTPCompression -Force -Verbose:$false
-                        }
-                        if ($NSObject.ClientIP -ne $this.ClientIP) {
-                            Write-Verbose -Message "Setting Client IP [$($this.ClientIP)]"
-                            Set-NSLBServiceGroup -Name $this.Name -ClientIP $this.ClientIP -Force -Verbose:$false
-                        }
-                        if ($NSObject.MaxBandwidthKbps -ne $this.MaxBandwidthKbps) {
-                            Write-Verbose -Message "Setting Maximum Bandwidth (Kbps) [$($this.MaxBandwidthKbps)]"
-                            Set-NSLBServiceGroup -Name $this.Name -MaxBandwidthKbps $this.MaxBandwidthKbps -Force -Verbose:$false
-                        }
-                        if ($NSObject.MonitorThreshold -ne $this.MonitorThreshold) {
-                            Write-Verbose -Message "Setting Monitor Threshold [$($this.MonitorThreshold)]"
-                            Set-NSLBServiceGroup -Name $this.Name -MonitorThreshold $this.MonitorThreshold -Force -Verbose:$false
-                        }
-                        if ($NSObject.MaxRequests -ne $this.MaxRequests) {
-                            Write-Verbose -Message "Setting Maximum Client Requests [$($this.MaxRequests)]"
-                            Set-NSLBServiceGroup -Name $this.Name -MaxRequests $this.MaxRequests -Force -Verbose:$false
-                        }
-                        if ($NSObject.MaxClients -ne $this.MaxClients) {
-                            Write-Verbose -Message "Setting Maximum Client connections [$($this.MaxClients)]"
-                            Set-NSLBServiceGroup -Name $this.Name -MaxClients $this.MaxClients -Force -Verbose:$false
-                        }
-                        if ($NSObject.ClientIdleTimeout -ne $this.ClientIdleTimeout) {
-                            Write-Verbose -Message "Setting Client Idle Timeout [$($this.ClientIdleTimeout)]"
-                            Set-NSLBServiceGroup -Name $this.Name -ClientIdleTimeout $this.ClientIdleTimeout -Force -Verbose:$false
-                        }
-                        if ($NSObject.ServerIdleTimeout -ne $this.ServerIdleTimeout) {
-                            Write-Verbose -Message "Setting Server Idle Timeout [$($this.ServerIdleTimeout)]"
-                            Set-NSLBServiceGroup -Name $this.Name -ServerIdleTimeout $this.ServerIdleTimeout -Force -Verbose:$false
-                        }
-                    } else {
-                        Write-Verbose -Message "Creating Service Group [$($this.Name)]"
+                   } else {
+                        Write-Verbose -Message "Added [$($this.MonitorName)] binding for, [$($this.ServiceGroupName)]"
                         $params = @{
-                            name = $this.Name
-                            servicetype = $this.ServiceType
-                            state = $this.State
-                            comment = $this.Comment
+                            ServiceGroupName = $this.ServiceGroupName
+                            MonitorName = $this.MonitorName
+                            Weight = $this.Weight
+                            State = $this.State
+                            Port = $this.Port
                         }
-                        if ($PSBoundParameters.ContainsKey('TrafficDomainId')) {
-                            $params.Add('TrafficDomainId', $this.TrafficDomainId)
-                        }
-                        if ($PSBoundParameters.ContainsKey('MaxClients')) {
-                            $params.Add('MaxClients', $this.MaxClients)
-                        }
-                        if ($PSBoundParameters.ContainsKey('CacheType')) {
-                            $params.Add('CacheType', $this.CacheType)
-                        }
-                        if ($PSBoundParameters.ContainsKey('AutoScale')) {
-                            $params.Add('AutoScale', $this.AutoScale)
-                        }
-                        if ($PSBoundParameters.ContainsKey('Cacheable')) {
-                            $params.Add('Cacheable', $this.Cacheable)
-                        }
-                        if ($PSBoundParameters.ContainsKey('HealthMonitor')) {
-                            $params.Add('HealthMonitor', $this.HealthMonitor)
-                        }
-                        if ($PSBoundParameters.ContainsKey('AppFlowLog')) {
-                            $params.Add('AppFlowLog', $this.AppFlowLog)
-                        }
-                        if ($PSBoundParameters.ContainsKey('SureConnect')) {
-                            $params.Add('SureConnect', $this.SureConnect)
-                        }
-                        if ($PSBoundParameters.ContainsKey('SurgeProtection')) {
-                            $params.Add('SurgeProtection', $this.SurgeProtection)
-                        }
-                        if ($PSBoundParameters.ContainsKey('UseProxyPort')) {
-                            $params.Add('UseProxyPort', $this.UseProxyPort)
-                        }
-                        if ($PSBoundParameters.ContainsKey('DownStateFlush')) {
-                            $params.Add('DownStateFlush', $this.DownStateFlush)
-                        }
-                        if ($PSBoundParameters.ContainsKey('UseClientIP')) {
-                            $params.Add('UseClientIP', $this.UseClientIP)
-                        }
-                        if ($PSBoundParameters.ContainsKey('ClientKeepAlive')) {
-                            $params.Add('ClientKeepAlive', $this.ClientKeepAlive)
-                        }
-                        if ($PSBoundParameters.ContainsKey('TCPBuffering')) {
-                            $params.Add('TCPBuffering', $this.TCPBuffering)
-                        }
-                        if ($PSBoundParameters.ContainsKey('HTTPCompression')) {
-                            $params.Add('HTTPCompression', $this.HTTPCompression)
-                        }
-                        if ($PSBoundParameters.ContainsKey('ClientIP')) {
-                            $params.Add('ClientIP', $this.ClientIP)
-                        }
-                        if ($PSBoundParameters.ContainsKey('MaxBandwidthKbps')) {
-                            $params.Add('MaxBandwidthKbps', $this.MaxBandwidthKbps)
-                        }
-                        if ($PSBoundParameters.ContainsKey('DownStateFlush')) {
-                            $params.Add('DownStateFlush', $this.DownStateFlush)
-                        }
-                        if ($PSBoundParameters.ContainsKey('MaxRequests')) {
-                            $params.Add('MaxRequests', $this.MaxRequests)
-                        }
-                        if ($PSBoundParameters.ContainsKey('ClientIdleTimeout')) {
-                            $params.Add('ClientIdleTimeout', $this.ClientIdleTimeout)
-                        }
-                        if ($PSBoundParameters.ContainsKey('ServerIdleTimeout')) {
-                            $params.Add('ServerIdleTimeout', $this.ServerIdleTimeout)
-                        }                         
-                        New-NSLBServiceGroup @params -ErrorAction SilentlyContinue
+                       Add-NSLBServiceGroupMonitorBinding @params -Confirm:$false
                     }
-                }
-                'Absent' {
+                } 'Absent' {
                     if ($this.Ensure -ne $NSObject.Ensure) {
-                        Remove-NSLBServiceGroup -Name $NSObject.Name -Confirm:$false -ErrorAction SilentlyContinue
-                        Write-Verbose -Message "Removing Netscaler monitor: $($this.Name)"
+                        Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false -ErrorAction SilentlyContinue
+                        Write-Verbose -Message "Removed Monitor Binding: $($this.ServiceGroupName > $this.MonitorName)"
                     }
                 }
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -1323,7 +1679,7 @@ class LBServiceGroup {
         }
     }
 
-    [bool]Test() {
+ [bool]Test() {
         $pass = $true
         $t = $null
         $t = $this.Init()
@@ -1332,108 +1688,29 @@ class LBServiceGroup {
             switch ($this.Ensure) {
                 'Present' {
                     if ($this.Ensure -eq $NSObject.Ensure) {
-                        if ($NSObject.Name -ne $this.Name) {
-                            Write-Verbose -Message "Service Group Name doest not match [$($NSObject.Name) <> $($this.Name)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.ServiceType -ne $this.ServiceType) {
-                            Write-Verbose -Message "Service Type does not match [$($NSObject.ServiceType) <> $($this.ServiceType)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.TrafficDomainId -ne $this.TrafficDomainId) {
-                            Write-Verbose -Message "Traffic Domain does not match [$($NSObject.TrafficDomainId) <> $($this.TrafficDomainId)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.CacheType -ne $this.CacheType) {
-                            Write-Verbose -Message "Cache Type does not match [$($NSObject.CacheType) <> $($this.CacheType)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.Cacheable -ne $this.Cacheable) {
-                            Write-Verbose -Message "Cacheable setting does not match [$($NSObject.Cacheable) <> $($this.Cacheable)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.State -ne $this.State) {
-                            Write-Verbose -Message "State does not match [$($NSObject.State) <> $($this.State)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.HealthMonitor -ne $this.HealthMonitor) {
-                            Write-Verbose -Message "Health Monitor does not match [$($NSObject.HealthMonitor) <> $($this.HealthMonitor)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.AppFlowLog -ne $this.AppFlowLog) {
-                            Write-Verbose -Message "AppFlowLog does not match [$($NSObject.AppFlowLog) <> $($this.AppFlowLog)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.Comment -ne $this.Comment) {
-                            Write-Verbose -Message "Comment does not match [$($NSObject.Comment) <> $($this.Comment)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.SurgeProtection -ne $this.SurgeProtection) {
-                            Write-Verbose -Message "Surge Protection does not match [$($NSObject.SurgeProtection) <> $($this.SurgeProtection)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.SureConnect -ne $this.SureConnect) {
-                            Write-Verbose -Message "Sure Connect does not match [$($NSObject.SureConnect) <> $($this.SureConnect)]"
-                            $pass = $false
-                        }                            
-                        if ($NSObject.UseProxyPort -ne $this.UseProxyPort) {
-                            Write-Verbose -Message "Use Proxy Port does not match [$($NSObject.UseProxyPort) <> $($this.UseProxyPort)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.DownStateFlush -ne $this.DownStateFlush) {
-                            Write-Verbose -Message "DownState Flush does not match [$($NSObject.DownStateFlush) <> $($this.DownStateFlush)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.UseClientIP -ne $this.UseClientIP) {
-                            Write-Verbose -Message "Use Client IP does not match [$($NSObject.UseClientIP) <> $($this.UseClientIP)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.ClientKeepAlive -ne $this.ClientKeepAlive) {
-                            Write-Verbose -Message "Client Keep Alive does not match [$($NSObject.ClientKeepAlive) <> $($this.ClientKeepAlive)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.TCPBuffering -ne $this.TCPBuffering) {
-                            Write-Verbose -Message "TCP Buffering does not match [$($NSObject.TCPBuffering) <> $($this.TCPBuffering)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.HTTPCompression -ne $this.HTTPCompression) {
-                            Write-Verbose -Message "HTTP Compression does not match [$($NSObject.HTTPCompression) <> $($this.HTTPCompression)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.ClientIP -ne $this.ClientIP) {
-                            Write-Verbose -Message "Client IP does not match [$($NSObject.ClientIP) <> $($this.ClientIP)]"
-                            $pass = $false
-                        }
-                        # if ($NSObject.ClientIPHeader -ne $this.ClientIPHeader) {
-                        #     Write-Verbose -Message "ClientIP Header does not match [$($this.ClientIPHeader)]"
-                        #     $pass = $false
-                        # }
-                        if ($NSObject.MaxBandwidthKbps -ne $this.MaxBandwidthKbps) {
-                            Write-Verbose -Message "Maximum Banddwith (Kbps) does not match [$($NSObject.MaxBandwidthKbps) <> $($this.MaxBandwidthKbps)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.MonitorThreshold -ne $this.MonitorThreshold) {
-                            Write-Verbose -Message "Monitor Threshold does not match [$($NSObject.MonitorThreshold) <> $($this.MonitorThreshold)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.MaxRequests -ne $this.MaxRequests) {
-                            Write-Verbose -Message "Maximum Client Requests does not match [$($NSObject.MaxRequests) <> $($this.MaxRequests)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.MaxClients -ne $this.MaxClients) {
-                            Write-Verbose -Message "Maximum Client connections does not match [$($NSObject.MaxClients) <> $($this.MaxClients)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.ClientIdleTimeout -ne $this.ClientIdleTimeout) {
-                            Write-Verbose -Message "Client Idle Timeout does not match [$($NSObject.ClientIdleTimeout) <> $($this.ClientIdleTimeout)]"
-                            $pass = $false
-                        }
-                        if ($NSObject.ServerIdleTimeout -ne $this.ServerIdleTimeout) {
-                            Write-Verbose -Message "Server Idle Timeout does not match [$($NSObject.ServerIdleTimeout) <> $($this.ServerIdleTimeout)]"
-                            $pass = $false
-                        }
+                            # Run tests and set any needed attributes to match desired configuration
+                            if ($NSObject.ServiceGroupName -ne $this.ServiceGroupName) {
+                                Write-Verbose -Message "ServiceGroupName does not match [$($NSObject.servicegroupname) <> $($this.ServiceGroupName)]"
+                                $pass = $false
+                            }
+                            if ($NSObject.MonitorName -ne $this.MonitorName) {
+                                Write-Verbose -Message "MonitorName does not match [$($NSObject.MonitorName) <> $($this.MonitorName)]"
+                                $pass = $false
+                            }
+                            if ($NSObject.State -ne $this.State) {
+                                Write-Verbose -Message "State does not match [$($NSObject.State) <> $($this.State)]"
+                                $pass = $false
+                            }
+                            if ($NSObject.Weight -ne $this.Weight) {
+                                Write-Verbose -Message "Weight does not match [$($NSObject.Weight) <> $($this.MonitorName)]"
+                                $pass = $false
+                            }
+                            if ((!$NSObject.Port) -AND ($NSObject.Port -ne $this.Port)) {
+                                Write-Verbose -Message "Port does not match [$($NSObject.Port) <> $($this.Port)]"
+                                $pass = $false
+                            }
                     } else {
-                        Write-Verbose -Message "Resource [$($this.Name)] was not found"
+                        Write-Verbose -Message "File [$($this.ServiceGroupName) is not bound to $($this.MonitorName)]"
                         $pass = $false
                     }
                 }
@@ -1453,72 +1730,196 @@ class LBServiceGroup {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
-    [LBServiceGroup]Get() {
+    [LBServiceGroupMonitorBinding]Get() {
         $t = $null
         $t = $this.Init()
 
         try {
-            $s = Get-NSLBServiceGroup -Name $this.Name -Verbose:$false -ErrorAction SilentlyContinue
+            $s = Get-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -Verbose:$false -ErrorAction SilentlyContinue
         } catch {
             $s = $null
         }
 
-        $obj = [LBServiceGroup]::new()
-        $obj.Name = $this.Name
-        $obj.ServiceType = $this.ServiceType
-        $obj.TrafficDomainID = $this.TrafficDomainID
-        $obj.CacheType = $this.CacheType
-        $obj.MaxClients = $this.MaxClients
-        $obj.MaxRequests = $this.MaxRequests
-        $obj.Cacheable = $this.Cacheable        
-        $obj.ClientIP = $this.ClientIP
-        $obj.UseClientIP = $this.UseClientIP
-        $obj.UseProxyPort = $this.UseProxyPort
-        $obj.SureConnect = $this.SureConnect
-        $obj.SurgeProtection = $this.SurgeProtection
-        $obj.ClientKeepAlive = $this.ClientKeepAlive
-        $obj.ClientIdleTimeout = $this.ClientIdleTimeout
-        $obj.ServerIdleTimeout = $this.ServerIdleTimeout        
-        $obj.TCPBuffering = $this.TCPBuffering
-        $obj.HTTPCompression = $this.HTTPCompression
-        $obj.MaxBandwidthKbps = $this.MaxBandwidthKbps
+        $obj = [LBServiceGroupMonitorBinding]::new()
+        $obj.ServiceGroupName = $this.ServiceGroupName
+        $obj.MonitorName = $this.MonitorName
         $obj.State = $this.State
-        $obj.DownStateFlush = $this.DownStateFlush
-        $obj.HealthMonitor = $this.HealthMonitor
-        $obj.AppFlowLog = $this.AppFlowLog
-        $obj.Comment = $this.Comment
-        # $obj.ClientIPHeader = $this.ClientIPHeader
-        $obj.MonitorThreshold = $this.MonitorThreshold  
+        $obj.Weight = $this.Weight
+        $obj.Port = $this.Port
         if ($s) {
             $obj.Ensure = [ensure]::Present
-            $obj.Name = $s.servicegroupname
-            $obj.ServiceType = $s.servicetype
-            $obj.TrafficDomainID = $s.td
-            $obj.CacheType = $s.cachetype
-            $obj.MaxClients = $s.maxclient
-            $obj.MaxRequests = $s.maxreq
-            $obj.Cacheable = $s.cacheable
-            $obj.ClientIP = $s.cip
-            $obj.UseClientIP = $s.usip            
-            $obj.UseProxyPort = $s.useproxyport
-            $obj.SureConnect = $s.sc
-            $obj.SurgeProtection = $s.sp
-            $obj.ClientKeepAlive = $s.cka            
-            $obj.ClientIdleTimeout = $s.clttimeout
-            $obj.ServerIdleTimeout = $s.svrtimeout
-            $obj.TCPBuffering = $s.tcpb
-            $obj.HTTPCompression = $s.cmp
-            $obj.MaxBandwidthKbps = $s.maxbandwidth
+            $obj.ServiceGroupName = $s.servicegroupname
+            $obj.MonitorName = $s.monitor_name
             $obj.State = $s.state
-            $obj.DownStateFlush = $s.downstateflush
-            $obj.HealthMonitor = $s.healthmonitor
-            $obj.AppFlowLog = $s.appflowlog
-            $obj.Comment = $s.comment
-            # $obj.ClientIPHeader = $s.cipheader
-            $obj.MonitorThreshold = $s.monthreshold
+            $obj.Weight = $s.weight
+            if ($s.port) { $obj.Port = $this.Port }
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
+
+[DscResource()]
+class LBServiceMonitorBinding {
+    [DscProperty(Key)]
+    [string]$ServiceName
+
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
+
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN
+
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
+
+    [DscProperty(Mandatory)]
+    [string]$MonitorName
+
+    [DscProperty()]
+    [int]$Weight = 1
+
+
+    Init() {
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+    }
+
+    [void]Set() {
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.ServiceName -ne $this.ServiceName) {
+                            Write-Warning -Message "Setting ServiceName [$($this.ServiceName)] does not match, rebinding"
+                            Remove-NSLBServiceMonitorBinding -ServiceName $this.ServiceName -MonitorName $this.MonitorName -Confirm:$false
+                            Add-NSLBServiceMonitorBinding -ServiceName $this.ServiceName -MonitorName $this.MonitorName -Weight $this.Weight -Confirm:$false
+                        }
+                        if ($NSObject.MonitorName -ne $this.MonitorName) {
+                            Write-Warning -Message "Setting MonitorName [$($this.MonitorName)] does not match, rebinding"
+                            Remove-NSLBServiceMonitorBinding -ServiceName $this.ServiceName -MonitorName $this.MonitorName -Confirm:$false
+                            Add-NSLBServiceMonitorBinding -ServiceName $this.ServiceName -MonitorName $this.MonitorName -Weight $this.Weight -Confirm:$false
+                        }
+                        if ($NSObject.Weight -ne $this.Weight) {
+                            Write-Warning -Message "Setting Weight [$($this.Weight)] does not match, rebinding"
+                            Remove-NSLBServiceMonitorBinding -ServiceName $this.ServiceName -MonitorName $this.MonitorName -Confirm:$false
+                            Add-NSLBServiceMonitorBinding -ServiceName $this.ServiceName -MonitorName $this.MonitorName -Weight $this.Weight -Confirm:$false
+                        }
+                   } else {
+                        Write-Verbose -Message "Added [$($this.MonitorName)] binding for, [$($this.ServiceName)]"
+                        $params = @{
+                            ServiceName = $this.ServiceName
+                            MonitorName = $this.MonitorName
+                            Weight = $this.Weight
+                        }
+                       Add-NSLBServiceMonitorBinding @params -ErrorAction SilentlyContinue -Confirm:$false
+                    }
+                } 'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        Remove-NSLBServiceMonitorBinding -ServiceName $this.ServiceName -MonitorName $this.MonitorName -Confirm:$false -ErrorAction SilentlyContinue
+                        Write-Verbose -Message "Removed Monitor Binding: $($this.ServiceName > $this.MonitorName)"
+                    }
+                }
+            }
+        Save-NSConfig
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
+
+ [bool]Test() {
+        $pass = $true
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                            # Run tests and set any needed attributes to match desired configuration
+                            if ($NSObject.ServiceName -ne $this.ServiceName) {
+                                Write-Verbose -Message "ServiceName does not match [$($NSObject.ServiceName) <> $($this.ServiceName)]"
+                                $pass = $false
+                            }
+                            if ($NSObject.MonitorName -ne $this.MonitorName) {
+                                Write-Verbose -Message "MonitorName does not match [$($NSObject.MonitorName) <> $($this.MonitorName)]"
+                                $pass = $false
+                            }
+                            if ($NSObject.Weight -ne $this.Weight) {
+                                Write-Verbose -Message "Weight does not match [$($NSObject.Weight) <> $($this.MonitorName)]"
+                                $pass = $false
+                            }
+                    } else {
+                        Write-Verbose -Message "File [$($this.ServiceName) is not bound to $($this.MonitorName)]"
+                        $pass = $false
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        $pass = $false
+                    }
+                }
+            }
+        } catch {
+            Write-Error 'There was a problem testing the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+        return $pass
+    }
+
+    [LBServiceMonitorBinding]Get() {
+        $t = $null
+        $t = $this.Init()
+
+        try {
+            $s = Get-NSLBServiceMonitorBinding -ServiceName $this.ServiceName -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            $s = $null
+        }
+
+        $obj = [LBServiceMonitorBinding]::new()
+        $obj.ServiceName = $this.ServiceName
+        $obj.MonitorName = $this.MonitorName
+        $obj.Weight = $this.Weight
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.ServiceName = $s.name.ToString()
+            $obj.MonitorName = $s.monitor_name.ToString()
+            $obj.Weight = $s.weight
         } else {
             $obj.Ensure = [ensure]::Absent
         }
@@ -1536,8 +1937,8 @@ class LBServiceGroup {
 #     [Ensure]$Ensure = [Ensure]::Present
 
 #     [DscProperty(Mandatory)]
-#     [string]$NetScalerFQDN    
-    
+#     [string]$NetScalerFQDN
+
 #     [DscProperty(Mandatory)]
 #     [pscredential]$Credential
 
@@ -1600,7 +2001,7 @@ class LBServiceGroup {
 #                             preferredntpserver = $this.PreferredNTPServer
 #                         }
 #                         New-NSNTPServer @params -Verbose:$false -ErrorAction SilentlyContinue
-#                     }        
+#                     }
 #                 } 'Absent' {
 #                     if ($this.Ensure -ne $NSObject.Ensure) {
 #                         Remove-NSNTPServer -Server $this.Server -ErrorAction SilentlyContinue
@@ -1608,6 +2009,7 @@ class LBServiceGroup {
 #                     }
 #                 }
 #             }
+            #Save-NSConfig
 #         } catch {
 #             Write-Error 'There was a problem setting the resource'
 #             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -1650,7 +2052,7 @@ class LBServiceGroup {
 #                         Write-Verbose -Message "Resource [$($this.Server)] was not found"
 #                         $pass = $false
 #                     }
-#                 } 
+#                 }
 #                 'Absent' {
 #                     if ($this.Ensure -ne $NSObject.Ensure) {
 #                         $pass = $false
@@ -1699,6 +2101,7 @@ class LBServiceGroup {
 #     }
 # }
 
+
 [DscResource()]
 class LBResponderPolicy {
     [DscProperty(Key)]
@@ -1708,8 +2111,8 @@ class LBResponderPolicy {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -1762,7 +2165,7 @@ class LBResponderPolicy {
                         if ($NSObject.Comment -ne $this.Comment) {
                             Write-Verbose -Message "Setting monitor's Interval Type [$($this.Comment)]"
                             Set-NSResponderPolicy -Name $this.Name -Comment $this.Comment -Verbose:$false
-                        }   
+                        }
                     } else {
                         Write-Verbose -Message "Creating resource [$($this.Name)]"
                         $params = @{
@@ -1772,7 +2175,7 @@ class LBResponderPolicy {
                             comment  = $this.Comment
                         }
                         New-NSResponderPolicy @params -ErrorAction SilentlyContinue
-                    }        
+                    }
             } 'Absent' {
                 if ($this.Ensure -ne $NSObject.Ensure) {
                         Remove-NSResponderPolicy -Name $NSObject.Name -ErrorAction SilentlyContinue
@@ -1780,6 +2183,7 @@ class LBResponderPolicy {
                     }
                 }
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -1835,7 +2239,7 @@ class LBResponderPolicy {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBResponderPolicy]Get() {
@@ -1874,13 +2278,13 @@ class LBResponderAction {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
     [DscProperty()]
-    [ValidateSet('NOOP','Redirect','RespondWith', 'RespondWithSQLOK','RespondWithSQLError','RespondWithHTMLPage')] 
+    [ValidateSet('NOOP','Redirect','RespondWith', 'RespondWithSQLOK','RespondWithSQLError','RespondWithHTMLPage')]
     [string]$Type = 'NOOP'
 
     [DscProperty()]
@@ -1895,6 +2299,10 @@ class LBResponderAction {
     [DscProperty()]
     [ValidateLength(0, 8191)]
     [string]$ReasonPhrase = [string]::Empty
+
+    [DscProperty()]
+    [ValidateLength(0, 8191)]
+    [string]$HTMLPage = [string]::Empty
 
     [DscProperty()]
     [ValidateLength(0, 256)]
@@ -1934,31 +2342,42 @@ class LBResponderAction {
                             Write-Verbose -Message "Setting Responder Action [$($this.Type)]"
                             Set-NSResponderAction -Name $this.Name -Type $this.Type -Verbose:$false
                         }
-                        if ($NSObject.Target -ne $this.Target) {
+                        if (($NSObject.Target) -AND ($NSObject.Target -ne $this.Target)) {
                             Write-Verbose -Message "Setting Responder Action [$($this.Target)]"
                             Set-NSResponderAction -Name $this.Name -Target $this.Target -Verbose:$false
+                        }
+                        if (($NSObject.HTMLPage) -AND ($NSObject.HTMLPage -ne $this.HTMLPage)) {
+                            Write-Verbose -Message "Setting Responder Action [$($this.HTMLPage)]"
+                            Set-NSResponderAction -Name $this.Name -HTMLPage $this.HTMLPage -Verbose:$false
                         }
                         if ($NSObject.Comment -ne $this.Comment) {
                             Write-Verbose -Message "Setting Responder Action [$($this.Comment)]"
                             Set-NSResponderAction -Name $this.Name -Comment $this.Comment -Verbose:$false
-                        }   
+                        }
                 } else {
                         Write-Verbose -Message "Creating resource [$($this.Name)]"
                         $params = @{
                             name = $this.Name
                             type  = $this.Type
-                            target  = $this.Target
                             comment  = $this.Comment
                         }
+
+                        if ($PSBoundParameters.ContainsKey('Target')) {
+                            $params.Add('target', $this.Target)
+                        }
+                        if ($PSBoundParameters.ContainsKey('HTMLPage')) {
+                            $params.Add('HTMLPage', $this.HTMLPage)
+                        }
                         New-NSResponderAction @params -ErrorAction SilentlyContinue
-                    }        
+                    }
             } 'Absent' {
-                if ($this.Ensure -ne $NSObject.Ensure) {                
+                if ($this.Ensure -ne $NSObject.Ensure) {
                     Remove-NSResponderAction -Name $NSObject.Name -ErrorAction SilentlyContinue
                     Write-Verbose -Message "Removed Responder Action: $($this.Name)"
                     }
                 }
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -1989,8 +2408,12 @@ class LBResponderAction {
                             Write-Verbose -Message "Type does not match [$($NSObject.Type) <> $($this.Type)]"
                             $pass = $false
                         }
-                        if ($NSObject.Target -ne $this.Target) {
+                        if (($NSObject.Target) -AND ($NSObject.Target -ne $this.Target)) {
                             Write-Verbose -Message "Target does not match [$($NSObject.Target) <> $($this.Target)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.HTMLPage) -AND ($NSObject.HTMLPage -ne $this.HTMLPage)) {
+                            Write-Verbose -Message "HTMLPage does not match [$($NSObject.HTMLPage) <> $($this.HTMLPage)]"
                             $pass = $false
                         }
                     } else {
@@ -2014,7 +2437,7 @@ class LBResponderAction {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBResponderAction]Get() {
@@ -2031,12 +2454,14 @@ class LBResponderAction {
         $obj.Name = $this.Name
         $obj.Type = $this.Type
         $obj.Target = $this.Target
+        $obj.HTMLPage = $this.HTMLPage
         $obj.Comment = $this.Comment
         if ($s) {
             $obj.Ensure = [ensure]::Present
             $obj.Name = $s.name
             $obj.Type = $s.type
-            $obj.Target = $s.target
+            if ($s.target) { $obj.Target = $s.target }
+            if ($s.htmlpage) { $obj.HTMLPage = $s.htmlpage }
             $obj.Comment = $s.comment
         } else {
             $obj.Ensure = [ensure]::Absent
@@ -2055,8 +2480,8 @@ class LBRewritePolicy {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -2110,9 +2535,9 @@ class LBRewritePolicy {
                         if ($NSObject.actionname -ne $this.ActionName) {
                             Write-Verbose -Message "Setting Action Name [$($this.ActionName)]"
                             Set-NSRewritePolicy -Name $this.Name -ActionName $this.ActionName -LogActionName $this.LogActionName -Rule $this.Rule -Verbose:$false
-                        }                    
+                        }
                         if ($NSObject.logActionname -ne "Use Global") {
-                            if ($NSObject.logactionname -ne $this.LogActionName) {                                
+                            if ($NSObject.logactionname -ne $this.LogActionName) {
                                 Write-Verbose -Message "Setting LogActionName [$($this.LogActionName)]"
                                 Set-NSRewritePolicy -Name $this.Name -LogActionName $this.LogActionName -Verbose:$false
                             }
@@ -2131,9 +2556,9 @@ class LBRewritePolicy {
                         }
                         if ($PSBoundParameters.ContainsKey('LogActionName')) {
                             $params.Add('LogActionName', $this.LogActionName)
-                        }                        
+                        }
                         New-NSRewritePolicy @params -ErrorAction SilentlyContinue
-                    }        
+                    }
             } 'Absent' {
                 if ($this.Ensure -ne $NSObject.Ensure) {
                         Remove-NSRewritePolicy -Name $NSObject.Name -ErrorAction SilentlyContinue
@@ -2141,6 +2566,7 @@ class LBRewritePolicy {
                     }
                 }
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -2184,7 +2610,7 @@ class LBRewritePolicy {
                         if ($NSObject.Comment -ne $this.Comment) {
                             Write-Verbose -Message "Comment does not match [$($NSObject.Comment) <> $($this.Comment)]"
                             $pass = $false
-                        }             
+                        }
                     } else {
                         Write-Verbose -Message "Responder Policy [$($this.Name)] was not found"
                         $pass = $false
@@ -2206,7 +2632,7 @@ class LBRewritePolicy {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBRewritePolicy]Get() {
@@ -2249,8 +2675,8 @@ class LBRewriteAction {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -2304,7 +2730,7 @@ class LBRewriteAction {
                         if ($NSObject.Target -ne $this.Target) {
                             Write-Verbose -Message "Setting Action Name [$($this.Target)]"
                             Set-NSRewriteAction -Name $this.Name -Target $this.Target -Verbose:$false
-                        }                    
+                        }
                         if ($NSObject.Expression -ne $this.Expression) {
                             Write-Verbose -Message "Setting LogActionName [$($this.Expression)]"
                             Set-NSRewriteAction -Name $this.Name -Expression $this.Expression -Verbose:$false
@@ -2323,14 +2749,15 @@ class LBRewriteAction {
                             Comment  = $this.Comment
                         }
                         New-NSRewriteAction @params -ErrorAction SilentlyContinue
-                    }        
+                    }
             } 'Absent' {
-                if ($this.Ensure -ne $NSObject.Ensure) {                
+                if ($this.Ensure -ne $NSObject.Ensure) {
                     Remove-NSRewriteAction -Name $NSObject.Name -ErrorAction SilentlyContinue
                     Write-Verbose -Message "Removed Rewrite Action: $($this.Name)"
                     }
                 }
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -2372,7 +2799,7 @@ class LBRewriteAction {
                         if ($NSObject.comment -ne $this.Comment) {
                             Write-Verbose -Message "Comment does not match [$($NSObject.Comment) <> $($this.Comment)]"
                             $pass = $false
-                        }             
+                        }
                     } else {
                         Write-Verbose -Message "Responder Action [$($this.Name)] was not found"
                         $pass = $false
@@ -2394,7 +2821,7 @@ class LBRewriteAction {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBRewriteAction]Get() {
@@ -2437,8 +2864,8 @@ class LBDNSServer {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -2498,11 +2925,12 @@ class LBDNSServer {
                 } 'Absent' {
                     if ($this.Ensure -ne $NSObject.Ensure) {
                         Remove-NSDnsNameServer -IPAddress $this.IPAddress -Verbose:$false -ErrorAction SilentlyContinue
-                        Write-Verbose -Message "Removed DNS Server: $($this.IPAddress)"                        
+                        Write-Verbose -Message "Removed DNS Server: $($this.IPAddress)"
                     }
                 }
 
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -2561,7 +2989,7 @@ class LBDNSServer {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBDNSServer]Get() {
@@ -2602,8 +3030,8 @@ class LBNSMode {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -2647,7 +3075,8 @@ class LBNSMode {
                         Write-Verbose -Message "Mode disabled: $($this.Name)"
                     }
                  }
-              }   
+              }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -2687,7 +3116,7 @@ class LBNSMode {
                         }
                     }
                  }
-              }   
+              }
         } catch {
             Write-Error 'There was a problem testing the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -2698,7 +3127,7 @@ class LBNSMode {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBNSMode]Get() {
@@ -2733,8 +3162,8 @@ class LBNSFeature {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -2778,7 +3207,8 @@ class LBNSFeature {
                         Write-Verbose -Message "Feature disabled: $($this.Name)"
                     }
                  }
-              }   
+              }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -2818,7 +3248,7 @@ class LBNSFeature {
                         }
                     }
                  }
-              }   
+              }
         } catch {
             Write-Error 'There was a problem testing the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -2829,7 +3259,7 @@ class LBNSFeature {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBNSFeature]Get() {
@@ -2855,8 +3285,6 @@ class LBNSFeature {
     }
 }
 
-
-
 [DscResource()]
 class LBSSLCertificate {
     [DscProperty(Key)]
@@ -2866,8 +3294,8 @@ class LBSSLCertificate {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -2879,7 +3307,10 @@ class LBSSLCertificate {
 
     [DscProperty()]
     [string]$CertKeyFormat
-   
+
+    # [DscProperty()]
+    # [securestring]$Password
+
 
     Init() {
         try {
@@ -2910,22 +3341,26 @@ class LBSSLCertificate {
                         if (($NSObject.CertKeyName -ne $this.CertKeyName) -OR ($NSObject.CertPath -ne $this.CertPath) -OR ($NSObject.KeyPath -ne $this.KeyPath) -OR ($NSObject.CertKeyFormat -ne $this.CertKeyFormat)) {
                             Write-Verbose -Message "Warning, resource cannot be changed to [$($this.CertKeyName)], resource can only be removed and recreated"
                             Remove-NSCertKeyPair -CertKeyName $this.CertKeyName
-                        }                 
+                        }
                 } else {
                         Write-Verbose -Message "Creating resource [$($this.CertKeyName)]"
                         $params = @{
                             CertKeyName = $this.CertKeyName
                             CertPath  = $this.CertPath
+                            CertKeyFormat = $this.CertKeyFormat
                         }
                         if ($PSBoundParameters.ContainsKey('KeyPath')) {
                             $params.Add('KeyPath', $this.KeyPath)
-                        }  
-                        if ($PSBoundParameters.ContainsKey('CertKeyFormat')) {
-                            $params.Add('CertKeyFormat', $this.CertKeyFormat)
-                        }                                                      
+                        }
+                        # if ($PSBoundParameters.ContainsKey('CertKeyFormat')) {
+                        #     $params.Add('CertKeyFormat', $this.CertKeyFormat)
+                        # }
+                        if ($PSBoundParameters.ContainsKey('Password')) {
+                            $params.Add('Password', $this.Password)
+                        }
                         Add-NSCertKeyPair @params -ErrorAction SilentlyContinue
                     }
-                }       
+                }
                 'Absent' {
                     if ($this.Ensure -ne $NSObject.Ensure) {
                         Remove-NSCertKeyPair -CertKeyName $this.CertKeyName -ErrorAction SilentlyContinue
@@ -2933,6 +3368,7 @@ class LBSSLCertificate {
                     }
                 }
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -2991,7 +3427,7 @@ class LBSSLCertificate {
         } catch {
             # Do nothing
         }
-        return $pass         
+        return $pass
     }
 
     [LBSSLCertificate]Get() {
@@ -3005,17 +3441,917 @@ class LBSSLCertificate {
         }
         $obj = [LBSSLCertificate]::new()
         $obj.CertKeyName = $this.CertKeyName
-        $obj.CertPath = $this.CertPath      
+        $obj.CertPath = $this.CertPath
         $obj.CertKeyFormat = $this.CertKeyFormat
-        $obj.KeyPath = $this.KeyPath     
+        $obj.KeyPath = $this.KeyPath
         if ($s) {
             $obj.Ensure = [ensure]::Present
-            $obj.CertKeyName = $s.certkey
-            $obj.CertPath = "/nsconfig/ssl/" + $s.cert
-            $obj.CertKeyFormat = $s.inform
+            $obj.CertKeyName = $s.certkey.toString()
+            $obj.CertPath = $s.cert.toString()
+            $obj.CertKeyFormat = $s.inform.toString()
             if ($s.key) {
-                $obj.KeyPath = $s.key
+                $obj.KeyPath = $s.key.toString()
             }
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
+
+[DscResource()]
+class LBSSLCertificateBinding {
+    [DscProperty(Key)]
+    [string]$VirtualServerName
+
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
+
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN
+
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
+
+    [DscProperty()]
+    [string]$Certificate
+
+
+    Init() {
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+    }
+
+    [void]Set() {
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.virtualservername -ne $this.VirtualServerName) {
+                            Write-Verbose -Message "Warning, resource cannot be changed to [$($this.VirtualServerName)], resource can only be removed and recreated"
+                            Remove-NSLBSSLVirtualServerCertificateBinding -VirtualServerName $this.VirtualServerName -Certificate $this.Certificate
+                            Add-NSLBSSLVirtualServerCertificateBinding -VirtualServerName $this.VirtualServerName -Certificate $this.Certificate
+                        }
+                        if ($NSObject.Certificate -ne $this.Certificate) {
+                            Write-Verbose -Message "Warning, resource cannot be changed to [$($this.Certificate)], resource can only be removed and recreated"
+                            Remove-NSLBSSLVirtualServerCertificateBinding -VirtualServerName $this.VirtualServerName -Certificate $this.Certificate
+                            Add-NSLBSSLVirtualServerCertificateBinding -VirtualServerName $this.VirtualServerName -Certificate $this.Certificate
+                        }
+                } else {
+                        Write-Verbose -Message "Creating resource [$($this.CertKeyName)]"
+                        $params = @{
+                            VirtualServerName = $this.VirtualServerName
+                            Certificate = $this.Certificate
+                        }
+                        Add-NSLBSSLVirtualServerCertificateBinding @params -ErrorAction SilentlyContinue
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        Remove-NSLBSSLVirtualServerCertificateBinding -VirtualServerName $this.VirtualServerName -ErrorAction SilentlyContinue
+                        Write-Verbose -Message "Removed Binding of: $($this.VirtualServerName)"
+                    }
+                }
+            }
+        Save-NSConfig
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
+
+
+ [bool]Test() {
+        $pass = $true
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.virtualservername -ne $this.VirtualServerName) {
+                            Write-Verbose -Message "Virtual Server Name Path does not match [$($NSObject.virtualservername) <> $($this.VirtualServerName)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.certificate -ne $this.Certificate) {
+                            Write-Verbose -Message "Certificate does not match [$($NSObject.certificate) <> $($this.Certificate)]"
+                            $pass = $false
+                        }
+                    } else {
+                        Write-Verbose -Message "Binding of Certificate[$($this.Certificate)] to VirtualServer[$($this.VirtualServerName)] was not found"
+                        $pass = $false
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        $pass = $false
+                    }
+                }
+            }
+        } catch {
+            Write-Error 'There was a problem testing the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+        return $pass
+    }
+
+    [LBSSLCertificateBinding]Get() {
+        $t = $null
+        $t = $this.Init()
+
+        try {
+            $s = Get-NSCertKeyPair -CertKeyName $this.CertKeyName -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            $s = $null
+        }
+        $obj = [LBSSLCertificateBinding]::new()
+        $obj.VirtualServerName = $this.VirtualServerName
+        $obj.Certificate = $this.Certificate
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.VirtualServerName = $s.certkey
+            $obj.Certificate = $s.certkey
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
+
+[DscResource()]
+class LBSSLCertificateLink {
+    [DscProperty(Key)]
+    [string]$CertKeyName
+
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
+
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN
+
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
+
+    [DscProperty(Mandatory)]
+    [string]$IntermediateCertKeyName
+
+
+    Init() {
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+    }
+
+    [void]Set() {
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.certkeyname -ne $this.CertKeyName) {
+                            Write-Verbose -Message "Re-linking resource as [$($this.CertKeyName)], name does not match"
+                            Remove-NSSSLCertificateLink -CertKeyName $this.CertKeyName -Verbose:$false -ErrorAction SilentlyContinue
+                            Add-NSSSLCertificateLink -CertKeyName $this.CertKeyName -IntermediateCertKeyName $this.IntermediateCertKeyName -Verbose:$false -ErrorAction SilentlyContinue
+                        }
+                        if ($NSObject.certkeyname -ne $this.IntermediateCertKeyName) {
+                            Write-Verbose -Message "Re-linking resource as [$($this.IntermediateCertKeyName)], name does not match"
+                            Remove-NSSSLCertificateLink -CertKeyName $this.CertKeyName -Verbose:$false -ErrorAction SilentlyContinue
+                            Add-NSSSLCertificateLink -CertKeyName $this.CertKeyName -IntermediateCertKeyName $this.IntermediateCertKeyName -Verbose:$false -ErrorAction SilentlyContinue
+                        }
+                } else {
+                        Write-Verbose -Message "Creating resource [$($this.CertKeyName)]"
+                        $params = @{
+                            CertKeyName = $this.CertKeyName
+                            IntermediateCertKeyName = $this.IntermediateCertKeyName
+                        }
+                        Add-NSSSLCertificateLink @params -ErrorAction SilentlyContinue
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        Remove-NSSSLCertificateLink -CertKeyName $this.CertKeyName -ErrorAction SilentlyContinue
+                        Write-Verbose -Message "Removed Binding of: $($this.CertKeyName)"
+                    }
+                }
+            }
+        Save-NSConfig
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
+
+
+ [bool]Test() {
+        $pass = $true
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.certkeyname -ne $this.CertKeyName) {
+                            Write-Verbose -Message "CertKey does not match [$($NSObject.certkeyname) <> $($this.CertKeyName)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.intermediatecertKeyname -ne $this.IntermediateCertKeyName) {
+                            Write-Verbose -Message "Certificate Link does not match [$($NSObject.linkcertkeyname) <> $($this.IntermediateCertKeyName)]"
+                            $pass = $false
+                        }
+                    } else {
+                        Write-Verbose -Message "Binding of CertKey [$($this.IntermediateCertKeyName)] to VirtualServer[$($this.CertKeyName)] was not found"
+                        $pass = $false
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        $pass = $false
+                    }
+                }
+            }
+        } catch {
+            Write-Error 'There was a problem testing the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+        return $pass
+    }
+
+    [LBSSLCertificateLink]Get() {
+        $t = $null
+        $t = $this.Init()
+
+        try {
+            $s = Get-NSSSLCertificateLink -CertKeyName $this.CertKeyName -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            $s = $null
+        }
+        $obj = [LBSSLCertificateLink]::new()
+        $obj.CertKeyName = $this.CertKeyName
+        $obj.IntermediateCertKeyName = $this.IntermediateCertKeyName
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.CertKeyName = $s.certkeyname
+            $obj.IntermediateCertKeyName = $s.linkcertkeyname
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
+
+[DscResource()]
+class LBSSLProfile {
+    [DscProperty(Key)]
+    [string]$Name
+
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
+
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN
+
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
+
+    [DscProperty()]
+    [ValidateSet('NO','FRONTEND_CLIENT','FRONTENT_CLIENTSERVER','ALL','NONSECURE')]
+    [string]$DenySslRenegotiation
+
+    [DscProperty()]
+    [ValidateSet('FrontEnd','BackEnd')]
+    [string]$ProfileType
+
+    [DscProperty()]
+    [ValidateSet('ENABLED','DISABLED')]
+    [string]$SSL2
+
+    [DscProperty()]
+    [ValidateSet('ENABLED','DISABLED')]
+    [string]$SSL3
+
+    [DscProperty()]
+    [ValidateSet('ENABLED','DISABLED')]
+    [string]$TLS1
+
+    [DscProperty()]
+    [ValidateSet('ENABLED','DISABLED')]
+    [string]$TLS11
+
+    [DscProperty()]
+    [ValidateSet('ENABLED','DISABLED')]
+    [string]$TLS12
+
+    [DscProperty()]
+    [ValidateSet('ENABLED','DISABLED')]
+    [string]$DH
+
+    [DscProperty()]
+    [string]$DHFile
+
+    [DscProperty()]
+    [ValidateRange(0,65534)]
+    [int]$DHCount
+
+    [DscProperty()]
+    [ValidateSet('ENABLED','DISABLED')]
+    [string]$DHKeyExpSizeLimit
+
+    Init() {
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+    }
+
+    [void]Set() {
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.name -ne $this.Name) {
+                            Write-Verbose -Message "Warning, resource cannot be changed to [$($this.Name)], resource can only be removed and recreated"
+                        }
+                        if (($NSObject.denysslrenegotiation) -AND ($NSObject.denysslrenegotiation -ne $this.DenySslRenegotiation)) {
+                            Write-Verbose -Message "Setting DenySslRenegotiation [$($this.DenySslRenegotiation)]"
+                            Set-NSSSLProfile -Name $this.Name -DenySslRenegotiation $this.DenySslRenegotiation -Verbose:$false
+                        }
+                        if ($NSObject.profiletype -ne $this.ProfileType) {
+                            Write-Verbose -Message "Setting ProfileType [$($this.ProfileType)]"
+                            Set-NSSSLProfile -Name $this.Name -ProfileType $this.ProfileType -Verbose:$false
+                        }
+                        if (($NSObject.ssl2) -AND ($NSObject.ssl2 -ne $this.SSL2)) {
+                            Write-Verbose -Message "Setting SSL2 [$($this.SSL2)]"
+                            Set-NSSSLProfile -Name $this.Name -SSL2 $this.SSL2 -Verbose:$false
+                        }
+                        if (($NSObject.ssl3) -AND ($NSObject.ssl3 -ne $this.SSL3)) {
+                            Write-Verbose -Message "Setting SSL3 [$($this.SSL3)]"
+                            Set-NSSSLProfile -Name $this.Name -SSL3 $this.SSL3 -Verbose:$false
+                        }
+                        if (($NSObject.tls1) -AND ($NSObject.tls1 -ne $this.TLS1)) {
+                            Write-Verbose -Message "Setting TLS1 [$($this.TLS1)]"
+                            Set-NSSSLProfile -Name $this.Name -TLS1 $this.TLS1 -Verbose:$false
+                        }
+                        if (($NSObject.tls11) -AND ($NSObject.tls11 -ne $this.TLS11)) {
+                            Write-Verbose -Message "Setting TLS11 [$($this.TLS11)]"
+                            Set-NSSSLProfile -Name $this.Name -TLS11 $this.TLS11 -Verbose:$false
+                        }
+                        if (($NSObject.tls12) -AND ($NSObject.tls12 -ne $this.TLS12)) {
+                            Write-Verbose -Message "Setting TLS12 [$($this.TLS12)]"
+                            Set-NSSSLProfile -Name $this.Name -TLS12 $this.TLS12 -Verbose:$false
+                        }
+                        if (($NSObject.dh) -AND ($NSObject.dh -ne $this.DH)) {
+                            Write-Verbose -Message "Setting DH [$($this.DH)]"
+                            Set-NSSSLProfile -Name $this.Name -DH $this.DH -Verbose:$false
+                        }
+                        if (($NSObject.dhfile) -AND ($NSObject.dhfile -ne $this.DHFile)) {
+                            Write-Verbose -Message "Setting DHFile [$($this.DHFile)]"
+                            Set-NSSSLProfile -Name $this.Name -DHFile $this.DHFile -Verbose:$false
+                        }
+                        if (($NSObject.dhcount) -AND ($NSObject.dhcount -ne $this.DHCount)) {
+                            Write-Verbose -Message "Setting DHCount [$($this.DHCount)]"
+                            Set-NSSSLProfile -Name $this.Name -DHCount $this.DHCount -Verbose:$false
+                        }
+                        if (($NSObject.dhkeyexpsizelimit) -AND ($NSObject.dhkeyexpsizelimit -ne $this.DHKeyExpSizeLimit)) {
+                            Write-Verbose -Message "Setting DHKeyExpSizeLimit [$($this.DHKeyExpSizeLimit)]"
+                            Set-NSSSLProfile -Name $this.Name -DHKeyExpSizeLimit $this.DHKeyExpSizeLimit -Verbose:$false
+                        }
+                        if (($NSObject.denysslrenegotiation) -AND ($NSObject.DenySslRenegotiation -ne $this.DenySslRenegotiation)) {
+                            Write-Verbose -Message "Setting DenySslRenegotiation [$($this.DenySslRenegotiation)]"
+                            Set-NSSSLProfile -Name $this.Name -DenySslRenegotiation $this.DenySslRenegotiation -Verbose:$false
+                        }
+                    } else {
+                        Write-Verbose -Message "Creating resource [$($this.Name)]"
+                        $params = @{
+                            Name = $this.Name
+                            ProfileType = $this.ProfileType
+                        }
+                        if ($PSBoundParameters.ContainsKey('SSL2')) { $params.Add('ssl2', $this.SSL2) }
+                        if ($PSBoundParameters.ContainsKey('SSL3')) { $params.Add('ssl3', $this.SSL3) }
+                        if ($PSBoundParameters.ContainsKey('TLS1')) { $params.Add('tls1', $this.TLS1) }
+                        if ($PSBoundParameters.ContainsKey('TLS11')) { $params.Add('tls11', $this.TLS11) }
+                        if ($PSBoundParameters.ContainsKey('TLS12')) { $params.Add('tls12', $this.TLS12) }
+                        if ($PSBoundParameters.ContainsKey('DH')) { $params.Add('dh', $this.DH) }
+                        if ($PSBoundParameters.ContainsKey('DHFile')) { $params.Add('dhfile', $this.DHFile) }
+                        if ($PSBoundParameters.ContainsKey('DHCount')) { $params.Add('dhcount', $this.DHCount) }
+                        if ($PSBoundParameters.ContainsKey('DHKeyExpSizeLimit')) { $params.Add('dhkeyexpsizelimit', $this.DHKeyExpSizeLimit) }
+                        if ($PSBoundParameters.ContainsKey('DenySslRenegotiation')) { $params.Add('denysslrenegotiation', $this.DenySslRenegotiation) }
+
+                        New-NSSSLProfile @params -ErrorAction SilentlyContinue
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        Remove-NSSSLProfile -Name $this.Name -force -ErrorAction SilentlyContinue
+                        Write-Verbose -Message "Removed SSL Profile: $($this.Name)"
+                    }
+                }
+            }
+        Save-NSConfig
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
+
+
+ [bool]Test() {
+        $pass = $true
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.name -ne $this.Name) {
+                            Write-Verbose -Message "Name does not match [$($NSObject.name) <> $($this.Name)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.denysslrenegotiation) -AND ($NSObject.denysslrenegotiation -ne $this.DenySslRenegotiation)) {
+                            Write-Verbose -Message "DenySslRenegotiation does not match [$($NSObject.DenySslRenegotiation) <> $($this.DenySslRenegotiation)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.profiletype -ne $this.ProfileType) {
+                            Write-Verbose -Message "ProfileType does not match [$($NSObject.profiletype) <> $($this.ProfileType)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.ssl2) -AND ($NSObject.ssl2 -ne $this.SSL2)) {
+                            Write-Verbose -Message "SSL2 does not match [$($NSObject.ssl2) <> $($this.SSL2)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.ssl3) -AND ($NSObject.ssl3 -ne $this.SSL3)) {
+                            Write-Verbose -Message "SSL3 does not match [$($NSObject.ssl3) <> $($this.SSL3)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.tls1) -AND ($NSObject.tls1 -ne $this.TLS1)) {
+                            Write-Verbose -Message "TLS1 does not match [$($NSObject.tls1) <> $($this.TLS1)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.tls11) -AND ($NSObject.tls11 -ne $this.TLS11)) {
+                            Write-Verbose -Message "TLS11 does not match [$($NSObject.tls11) <> $($this.TLS11)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.tls12) -AND ($NSObject.tls12 -ne $this.TLS12)) {
+                            Write-Verbose -Message "TLS12 does not match [$($NSObject.tls12) <> $($this.TLS12)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.dh) -AND ($NSObject.dh -ne $this.DH)) {
+                            Write-Verbose -Message "DH does not match [$($NSObject.dh) <> $($this.DH)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.dhfile) -AND ($NSObject.dhfile -ne $this.DHFile)) {
+                            Write-Verbose -Message "DHFile does not match [$($NSObject.dhfile) <> $($this.DHFile)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.dhcount) -AND ($NSObject.dhcount -ne $this.DHCount)) {
+                            Write-Verbose -Message "DHCount does not match [$($NSObject.dhcount) <> $($this.DHCount)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.dhkeyexpsizelimit) -AND ($NSObject.dhkeyexpsizelimit -ne $this.DHKeyExpSizeLimit)) {
+                            Write-Verbose -Message "DHKeyExpSizeLimit does not match [$($NSObject.dhkeyexpsizelimit) <> $($this.DHKeyExpSizeLimit)]"
+                            $pass = $false
+                        }
+                        if (($NSObject.denysslrenegotiation) -AND ($NSObject.DenySslRenegotiation -ne $this.DenySslRenegotiation)) {
+                            Write-Verbose -Message "Deny SSL Renegotiation does not match [$($NSObject.denysslrenegotiation) <> $($this.DenySslRenegotiation)]"
+                            $pass = $false
+                        }
+                    } else {
+                        Write-Verbose -Message "SSL Profile [$($this.Name)] was not found"
+                        $pass = $false
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        $pass = $false
+                    }
+                }
+            }
+        } catch {
+            Write-Error 'There was a problem testing the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+        return $pass
+    }
+
+    [LBSSLProfile]Get() {
+        $t = $null
+        $t = $this.Init()
+
+        try {
+            $s = Get-NSSSLProfile -Name $this.Name -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            $s = $null
+        }
+        $obj = [LBSSLProfile]::new()
+        $obj.Name = $this.Name
+        $obj.DenySslRenegotiation = $this.DenySslRenegotiation
+        $obj.ProfileType = $this.ProfileType
+        $obj.SSL2 = $this.SSL2
+        $obj.SSL3 = $this.SSL3
+        $obj.TLS1 = $this.TLS1
+        $obj.TLS11 = $this.TLS11
+        $obj.TLS12 = $this.TLS12
+        $obj.DH = $this.DH
+        $obj.DHFile = $this.DHFile
+        $obj.DHCount = $this.DHCount
+        $obj.DHKeyExpSizeLimit = $this.DHKeyExpSizeLimit
+        $obj.DenySslRenegotiation = $this.DenySslRenegotiation
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.Name = $s.name
+            $obj.DenySslRenegotiation = $s.denysslreneg
+            $obj.ProfileType = $s.sslprofiletype
+            if ($s.ssl2) { $obj.SSL2 = $s.ssl2 }
+            if ($s.ssl3) { $obj.SSL3 = $s.ssl3 }
+            if ($s.tls1) { $obj.TLS1 = $s.tls1 }
+            if ($s.tls11) { $obj.TLS11 = $s.tls11 }
+            if ($s.tls12) { $obj.TLS12 = $s.tls12 }
+            if ($s.dh) { $obj.DH = $s.dh }
+            if ($s.dhfile) { $obj.DHFile = $s.dhfile }
+            if ($s.dhcount) { $obj.DHCount = $s.dhcount }
+            if ($s.dhkeyexpsizelimit) { $obj.DHKeyExpSizeLimit = $s.dhkeyexpsizelimit }
+            if ($s.denysslreneg) { $obj.DenySslRenegotiation = $s.denysslreneg }
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
+
+[DscResource()]
+class LBSSLProfileBinding {
+    [DscProperty(Key)]
+    [string]$Name
+
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
+
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN
+
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
+
+    [DscProperty()]
+    [string]$SSLProfile
+
+    Init() {
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+    }
+
+    [void]Set() {
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.name -ne $this.Name) {
+                            Write-Verbose -Message "Warning, resource cannot be changed to [$($this.Name)], resource can only be removed and recreated"
+                        }
+                        if ($NSObject.sslprofile -ne $this.SSLProfile) {
+                            Write-Verbose -Message "Setting SSLProfile [$($this.SSLProfile)]"
+                            Set-NSLBSSLVirtualServer -Name $this.Name -SSLProfile $this.SSLProfile -Verbose:$false
+                        }
+                    } else {
+                        Write-Verbose -Message "Creating resource [$($this.Name)]"
+                        $params = @{
+                            Name = $this.Name
+                            sslprofile = $this.SSLProfile
+                        }
+
+                        Set-NSLBSSLVirtualServer @params -ErrorAction SilentlyContinue
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        Write-Verbose -Message "Removed resource [$($this.Name)]"
+                        $params = @{
+                            Name = $this.Name
+                            sslprofile = $this.SSLProfile
+                        }
+
+                        Set-NSLBSSLVirtualServer @params -ErrorAction SilentlyContinue
+                    }
+                }
+            }
+        Save-NSConfig
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
+
+
+ [bool]Test() {
+        $pass = $true
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.name -ne $this.Name) {
+                            Write-Verbose -Message "Name does not match [$($NSObject.name) <> $($this.Name)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.sslprofile -ne $this.SSLProfile) {
+                            Write-Verbose -Message "SSLProfile does not match [$($NSObject.sslprofile) <> $($this.SSLProfile)]"
+                            $pass = $false
+                        }
+                    } else {
+                        Write-Verbose -Message "SSL Profile [$($this.Name)] was not found"
+                        $pass = $false
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        $pass = $false
+                    }
+                }
+            }
+        } catch {
+            Write-Error 'There was a problem testing the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+        return $pass
+    }
+
+    [LBSSLProfileBinding]Get() {
+        $t = $null
+        $t = $this.Init()
+
+        try {
+            $s = Get-NSSSLProfile -Name $this.Name -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            $s = $null
+        }
+        $obj = [LBSSLProfileBinding]::new()
+        $obj.Name = $this.Name
+        $obj.SSLProfile = $this.SSLProfile
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.Name = $s.name
+            $obj.SSLProfile = $s.sslprofile
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
+
+[DscResource()]
+class LBResponderHTMLPage {
+    [DscProperty(Key)]
+    [string]$Name
+
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
+
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN
+
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
+
+    [DscProperty()]
+    [string]$Source
+
+    [DscProperty()]
+    [ValidateSet($True,$False)]
+    [bool]$Overwrite = $True
+
+    Init() {
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+    }
+
+    [void]Set() {
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.name -ne $this.Name) {
+                            Write-Verbose -Message "Readding HTML page [$($this.Name)]"
+                            Remove-NSResponderHTMLPage -Name $this.Name -ErrorAction SilentlyContinue
+                            New-NSResponderHTMLPage -Namev $this.Name -Source $this.Source -Overwrite $this.Overwrite -ErrorAction SilentlyContinue
+                        }
+                    } else {
+                        Write-Verbose -Message "Creating resource [$($this.Name)]"
+                        $params = @{
+                            Name = $this.Name
+                            Source = $this.Source
+                            Overwrite = $this.Overwrite
+                        }
+
+                        New-NSResponderHTMLPage @params -ErrorAction SilentlyContinue
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        Remove-NSResponderHTMLPage -Name $this.Name -ErrorAction SilentlyContinue
+                        Write-Verbose -Message "Removed Responder HTML Page: $($this.Name)"
+                    }
+                }
+            }
+        Save-NSConfig
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
+
+
+ [bool]Test() {
+        $pass = $true
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.name -ne $this.Name) {
+                            Write-Verbose -Message "Name does not match [$($NSObject.name) <> $($this.Name)]"
+                            $pass = $false
+                        }
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        $pass = $false
+                    }
+                }
+            }
+        } catch {
+            Write-Error 'There was a problem testing the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+        return $pass
+    }
+
+    [LBResponderHTMLPage]Get() {
+        $t = $null
+        $t = $this.Init()
+
+        try {
+            $s = Get-NSResponderHTMLPage -Name $this.Name -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            $s = $null
+        }
+        $obj = [LBResponderHTMLPage]::new()
+        $obj.Name = $this.Name
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.Name = $s.name
         } else {
             $obj.Ensure = [ensure]::Absent
         }
@@ -3026,172 +4362,6 @@ class LBSSLCertificate {
 
 
 # [DscResource()]
-# class LBSSLCertificate {
-#     [DscProperty(Key)]
-#     [string]$CertKeyName
-
-#     [DscProperty()]
-#     [Ensure]$Ensure = [Ensure]::Present
-
-#     [DscProperty(Mandatory)]
-#     [string]$NetScalerFQDN    
-    
-#     [DscProperty(Mandatory)]
-#     [pscredential]$Credential
-
-#     [DscProperty()]
-#     [string]$CertPath
-
-#     [DscProperty()]
-#     [string]$KeyPath
-
-#     [DscProperty()]
-#     [ValidateSet('PEM','DER','PFX')]
-#     [string]$CertKeyFormat = 'PEM'
-
-#     [DscProperty()]
-#     [securestring]$Password
-
-
-#     Init() {
-#         try {
-#             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
-#             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
-#         } catch {
-#             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
-#         }
-#     }
-
-#     [void]Set() {
-#         $t = $null
-#         $t = $this.Init()
-#         $NSObject = $this.Get()
-
-#         try {
-#             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
-#             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
-#         } catch {
-#             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
-#         }
-
-#         try {
-#             switch ($this.Ensure) {
-#                 'Present' {
-#                     if ($this.Ensure -eq $NSObject.Ensure) {
-#                         # Run tests and set any needed attributes to match desired configuration
-#                         if (($NSObject.CertKeyName -ne $this.CertKeyName) -OR ($NSObject.CertPath -ne $this.CertPath) -OR ($NSObject.KeyPath -ne $this.KeyPath) -OR ($NSObject.CertKeyFormat -ne $this.CertKeyFormat)) {
-#                             Write-Verbose -Message "Warning, resource cannot be changed to [$($this.CertKeyName)], resource can only be removed and recreated"
-#                             Remove-NSCertKeyPair -CertKeyName $this.CertKeyName
-#                         }                 
-#                 } else {
-#                         Write-Verbose -Message "Creating resource [$($this.CertKeyName)]"
-#                         $params = @{
-#                             CertKeyName = $this.CertKeyName
-#                             CertPath  = $this.CertPath
-#                             KeyPath  = $this.KeyPath
-#                             CertKeyFormat = $this.CertKeyFormat
-#                         }
-#                         Add-NSCertKeyPair @params -ErrorAction SilentlyContinue
-#                     }
-#                 }       
-#                 'Absent' {
-#                     if ($this.Ensure -ne $NSObject.Ensure) {
-#                         Remove-NSResponderAction -Name $NSObject.CertKeyName -ErrorAction SilentlyContinue
-#                         Write-Verbose -Message "Removed Certificate: $($this.Name)"
-#                     }
-#                 }
-#             }
-#         } catch {
-#             Write-Error 'There was a problem setting the resource'
-#             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
-#             Write-Error $_
-#         }
-#         try {
-#             Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-#         } catch {
-#             # Do nothing
-#         }
-#     }
-
-#  [bool]Test() {
-#         $pass = $true
-#         $t = $null
-#         $t = $this.Init()
-#         $NSObject = $this.Get()
-#         try {
-#             switch ($this.Ensure) {
-#                 'Present' {
-#                     if ($this.Ensure -eq $NSObject.Ensure) {
-#                             # Run tests and set any needed attributes to match desired configuration
-#                             if ($NSObject.certkeyname -ne $this.CertKeyName) {
-#                                 Write-Verbose -Message "Certificate Key Name does not match [$($NSObject.certkeyname) <> $($this.CertKeyName)]"
-#                                 $pass = $false
-#                             }
-#                             if ($NSObject.certpath -ne $this.CertPath) {
-#                                 Write-Verbose -Message "Certificate Path does not match [$($NSObject.certpath) <> $($this.CertPath)]"
-#                                 $pass = $false
-#                             }
-#                             if ($this.KeyPath) {
-#                                 if ($NSObject.keypath -ne $this.KeyPath) {
-#                                     Write-Verbose -Message "Key Path does not match [$($NSObject.keypath) <> $($this.KeyPath)]"
-#                                     $pass = $false
-#                                 }
-#                             }
-#                     } else {
-#                         Write-Verbose -Message "Certificate[$($this.CertKeyName)] was not found"
-#                         $pass = $false
-#                     }
-#                 }
-#                 'Absent' {
-#                     if ($this.Ensure -ne $NSObject.Ensure) {
-#                         $pass = $false
-#                     }
-#                 }
-#             }
-#         } catch {
-#             Write-Error 'There was a problem testing the resource'
-#             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
-#             Write-Error $_
-#         }
-#         try {
-#             Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-#         } catch {
-#             # Do nothing
-#         }
-#         return $pass        
-#     }
-
-#     [LBSSLCertificate]Get() {
-#         $t = $null
-#         $t = $this.Init()
-
-#         try {
-#             $s = Get-NSCertKeyPair -CertKeyName $this.CertKeyName -Verbose:$false -ErrorAction SilentlyContinue
-#         } catch {
-#             $s = $null
-#         }
-#         $obj = [LBSSLCertificate]::new()
-#         $obj.CertKeyName = $this.CertKeyName
-#         $obj.CertPath = $this.CertPath        
-#         $obj.CertKeyFormat = $this.CertKeyFormat
-#         $obj.KeyPath = $this.KeyPath        
-#         if ($s) {
-#             $obj.Ensure = [ensure]::Present
-#             $obj.CertKeyName = $s.certkey
-#             $obj.CertPath = $s.cert
-#             $obj.CertKeyFormat = $s.inform
-#             if ($s.key) {
-#                 $obj.KeyPath = $s.key
-#             }
-#         } else {
-#             $obj.Ensure = [ensure]::Absent
-#         }
-#         Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-#         return $obj
-#     }
-# }
-
-# [DscResource()]
 # class LBNSIP {
 #     [DscProperty(Key)]
 #     [string]$IPAddress
@@ -3200,8 +4370,8 @@ class LBSSLCertificate {
 #     [Ensure]$Ensure = [Ensure]::Present
 
 #     [DscProperty(Mandatory)]
-#     [string]$NetScalerFQDN    
-    
+#     [string]$NetScalerFQDN
+
 #     [DscProperty(Mandatory)]
 #     [pscredential]$Credential
 
@@ -3264,7 +4434,7 @@ class LBSSLCertificate {
 #                         if ($NSObject.SubnetMask -ne $this.SubnetMask) {
 #                             Write-Verbose -Message "Resource name does not match [$($this.SubnetMask)]"
 #                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask
-#                         } 
+#                         }
 #                         if ($NSObject.Type -ne $this.Type) {
 #                             Write-Verbose -Message "Warning, the resource cannot be set to [$($this.Type)]"
 #                         }
@@ -3275,7 +4445,7 @@ class LBSSLCertificate {
 #                         if ($NSObject.Telnet -ne $this.Telnet) {
 #                             Write-Verbose -Message "Setting Telnet [$($this.Telnet)]"
 #                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -Telnet
-#                         }                                                    
+#                         }
 #                         if ($NSObject.FTP -ne $this.FTP) {
 #                             Write-Verbose -Message "Setting FTP [$($this.FTP)]"
 #                             Set-NSIPResource -IPAddress $this.IPAddress -SubnetMask $this.SubnetMask -FTP
@@ -3302,7 +4472,7 @@ class LBSSLCertificate {
 #                             ipaddress = $this.IPAddress
 #                             netmask = $this.SubnetMask
 #                             type = $this.Type
-#                         }                         
+#                         }
 #                        Add-NSIPResource @params -Confirm:$false
 #                     #    $switches {
 #                     #         ipaddress = $this.IPAddress
@@ -3313,7 +4483,7 @@ class LBSSLCertificate {
 #                     #         ftp = $this.FTP
 #                     #         gui = $this.GUI
 #                     #         ssh = $this.SSH
-#                     #         snmp = $this.SNMP        
+#                     #         snmp = $this.SNMP
 #                     #         mgmtaccess = $this.mgmtaccess
 #                     #    }
 #                     #    Invoke-DscResource -Method set -ModuleName poshorigin_netscaler -Name LBNSIP -Property $switches
@@ -3324,7 +4494,7 @@ class LBSSLCertificate {
 #                         Write-Verbose -Message "Feature disabled: $($this.Name)"
 #                     }
 #                  }
-#               }   
+#               }
 #         } catch {
 #             Write-Error 'There was a problem setting the resource'
 #             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -3346,7 +4516,7 @@ class LBSSLCertificate {
 #         try {
 #             switch ($this.Ensure) {
 #                 'Present' {
-#                     if ($this.Ensure -eq $NSObject.Ensure) {                                                                        
+#                     if ($this.Ensure -eq $NSObject.Ensure) {
 #                         # # Run tests and set any needed attributes to match desired configuration
 #                         if ($NSObject.ipaddress -ne $this.IPAddress) {
 #                             Write-Verbose -Message "IPAddress does not match [$($NSObject.ipaddress) <> $($this.IPAddress)]"
@@ -3387,7 +4557,7 @@ class LBSSLCertificate {
 #                         if ($NSObject.mgmtaccess -ne $this.MgmtAccess) {
 #                             Write-Verbose -Message "MgmtAccess does not match [$($NSObject.mgmtaccess) <> $($this.MgmtAccess)]"
 #                             $pass = $false
-#                         }                             
+#                         }
 #                     } else {
 #                         $pass = $false
 #                     }
@@ -3400,7 +4570,7 @@ class LBSSLCertificate {
 #                         }
 #                     }
 #                  }
-#               }   
+#               }
 #         } catch {
 #             Write-Error 'There was a problem testing the resource'
 #             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -3411,7 +4581,7 @@ class LBSSLCertificate {
 #         } catch {
 #             # Do nothing
 #         }
-#         return $pass        
+#         return $pass
 #     }
 
 #     [LBNSIP]Get() {
@@ -3455,7 +4625,7 @@ class LBSSLCertificate {
 #     }
 
 #     <#
-#         Helper method to test switch/boolean options 
+#         Helper method to test switch/boolean options
 #     #>
 #     [bool] TestEnabledFeatures([string] $Existing){
 #         # $present = $true
@@ -3468,9 +4638,8 @@ class LBSSLCertificate {
 #     }
 # }
 
-
 [DscResource()]
-class LBNSVirtualServerBinding {
+class LBVirtualServerBinding {
     [DscProperty(Key)]
     [string]$VirtualServerName
 
@@ -3478,8 +4647,8 @@ class LBNSVirtualServerBinding {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -3527,7 +4696,7 @@ class LBNSVirtualServerBinding {
                                 Add-NSLBVirtualServerBinding -VirtualServerName $this.VirtualServerName -ServiceName $this.ServiceName -Weight $this.Weight -Confirm:$false
                             }
                         }
-                    } 
+                    }
                 } 'Absent' {
                     if ($this.ServiceGroupName) {
                         if ($this.Ensure -ne $NSObject.Ensure) {
@@ -3539,7 +4708,8 @@ class LBNSVirtualServerBinding {
                             Write-Verbose -Message "Virtual Server Binding removed for $($this.VirtualServerName)"
                     }
                  }
-              }   
+              }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -3562,7 +4732,7 @@ class LBNSVirtualServerBinding {
                 'Present' {
                     if ($this.Ensure -eq $NSObject.Ensure) {
                         # Run tests and set any needed attributes to match desired configuration
-                        if ($this.servicegroupname -eq $NSObject.ServiceGroupName) {                        
+                        if ($this.servicegroupname -eq $NSObject.ServiceGroupName) {
                             if ($NSObject.virtualservername -ne $this.VirtualServerName) {
                                 Write-Verbose -Message "VirtualServerName does not match [$($NSObject.virtualservername) <> $($this.VirtualServerName)]"
                                 $pass = $false
@@ -3575,12 +4745,12 @@ class LBNSVirtualServerBinding {
                             if ($NSObject.virtualservername -ne $this.VirtualServerName) {
                                 Write-Verbose -Message "VirtualServerName does not match [$($NSObject.virtualservername) <> $($this.VirtualServerName)]"
                                 $pass = $false
-                            }                            
+                            }
                             if ($NSObject.servicename -ne $this.ServiceName) {
                                 Write-Verbose -Message "ServiceName does not match [$($NSObject.servicename) <> $($this.ServiceName)]"
                                 $pass = $false
                             }
-                        }  
+                        }
                     } else {
                         $pass = $false
                     }
@@ -3593,7 +4763,7 @@ class LBNSVirtualServerBinding {
                         }
                     }
                  }
-              }   
+              }
         } catch {
             Write-Error 'There was a problem testing the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -3604,10 +4774,10 @@ class LBNSVirtualServerBinding {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
-    [LBNSVirtualServerBinding]Get() {
+    [LBVirtualServerBinding]Get() {
         $t = $null
         $t = $this.Init()
 
@@ -3617,7 +4787,7 @@ class LBNSVirtualServerBinding {
             $s = $null
         }
 
-        $obj = [LBNSVirtualServerBinding]::new()
+        $obj = [LBVirtualServerBinding]::new()
             $obj.VirtualServerName = $this.VirtualServerName
             $obj.ServiceGroupName = $this.ServiceGroupName
             $obj.ServiceName = $this.ServiceName
@@ -3634,7 +4804,6 @@ class LBNSVirtualServerBinding {
     }
 }
 
-
 [DscResource()]
 class LBSystemFile {
     [DscProperty(Key)]
@@ -3644,8 +4813,8 @@ class LBSystemFile {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -3685,7 +4854,7 @@ class LBSystemFile {
                         if (!$NSObject.FileName) {
                             Write-Verbose -Message "Warning, resource cannot be changed to [$($this.FileName)], resource can only be removed and recreated"
                             Add-NSSystemFile -Path $this.Path -FileLocation $this.FileLocation -FileName $this.FileName -Force
-                        }                 
+                        }
                     }
                 } 'Absent' {
                     if ($this.Ensure -ne $NSObject.Ensure) {
@@ -3694,6 +4863,7 @@ class LBSystemFile {
                     }
                 }
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -3745,7 +4915,7 @@ class LBSystemFile {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBSystemFile]Get() {
@@ -3757,7 +4927,7 @@ class LBSystemFile {
         } catch {
             $s = $null
         }
-        
+
         $obj = [LBSystemFile]::new()
         $obj.FileName
         $obj.FileLocation
@@ -3786,8 +4956,8 @@ class LBVLAN {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -3795,17 +4965,11 @@ class LBVLAN {
     [string]$AliasName
 
     [DscProperty()]
-    [ValidateSet('ENABLED','DISABLED')] 
+    [ValidateSet('ENABLED','DISABLED')]
     [string]$IPV6DynamicRouting = 'DISABLED'
 
     [DscProperty(Mandatory)]
     [int]$MTU
-
-    [DscProperty()]
-    [string]$Interface
-
-    [DscProperty()]
-    [bool]$Tagged = $false
 
     Init() {
         try {
@@ -3840,21 +5004,13 @@ class LBVLAN {
                             Write-Verbose -Message "Setting AliasName [$($this.AliasName)]"
                             Set-NSVLAN -VLANID $this.VLANID -AliasName $this.AliasName
                         }
-                        if ($NSObject.mtu -ne $this.AliasName) {
-                            Write-Verbose -Message "Setting AliasName [$($this.AliasName)]"
-                            Set-NSVLAN -VLANID $this.VLANID -AliasName $this.AliasName
-                        }    
                         if ($NSObject.ipv6dynamicrouting -ne $this.IPV6DynamicRouting) {
                             Write-Verbose -Message "Setting AliasName [$($this.IPV6DynamicRouting)]"
                             Set-NSVLAN -VLANID $this.VLANID -IPV6DynamicRouting $this.IPV6DynamicRouting
-                        }         
+                        }
                         if ($NSObject.mtu -ne $this.MTU) {
                             Write-Verbose -Message "Setting AliasName [$($this.MTU)]"
                             Set-NSVLAN -VLANID $this.VLANID -MTU $this.MTU
-                        }
-                        if ($NSObject.interface -ne $this.Interface) {
-                            Write-Verbose -Message "Setting Interface [$($this.Interface)]"
-                            Set-NSVLANInterfaceBinding -VLANID $this.VLANID -Interface $this.Interface
                         }
                    } else {
                         Write-Verbose -Message "Feature enabled, [$($this.IPAddress)]"
@@ -3863,8 +5019,7 @@ class LBVLAN {
                             aliasname = $this.AliasName
                             ipv6dynamicrouting = $this.ipv6dynamicrouting
                             mtu = $this.MTU
-                            interface = $this.Interface
-                        }                         
+                        }
                        Add-NSVLAN @params -Confirm:$false
                     }
                 } 'Absent' {
@@ -3874,6 +5029,7 @@ class LBVLAN {
                     }
                 }
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -3912,14 +5068,6 @@ class LBVLAN {
                                 Write-Verbose -Message "MTU does not match [$($NSObject.mtu) <> $($this.MTU)]"
                                 $pass = $false
                             }
-                            if ($NSObject.interface -ne $this.Interface) {
-                                Write-Verbose -Message "Interface does not match [$($NSObject.interface) <> $($this.Interface)]"
-                                $pass = $false
-                            }
-                            if ($NSObject.tagged -ne $this.Tagged) {
-                                Write-Verbose -Message "Tagged does not match [$($NSObject.Tagged) <> $($this.Tagged)]"
-                                $pass = $false
-                            }      
                     } else {
                         Write-Verbose -Message "File[$($this.VLANID)] was not found"
                         $pass = $false
@@ -3941,7 +5089,7 @@ class LBVLAN {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBVLAN]Get() {
@@ -3953,22 +5101,202 @@ class LBVLAN {
         } catch {
             $s = $null
         }
-        
+
         $obj = [LBVLAN]::new()
         $obj.VLANID = $this.VLANID
         $obj.AliasName = $this.AliasName
         $obj.IPV6DynamicRouting = $this.IPV6DynamicRouting
         $obj.MTU = $this.MTU
-        $obj.Interface = $this.Interface
-        $obj.Tagged = $this.Tagged
         if ($s) {
             $obj.Ensure = [ensure]::Present
             $obj.VLANID = $s.id
             if ($s.AliasName) { $obj.AliasName = $s.aliasname }
             $obj.IPV6DynamicRouting = $s.ipv6dynamicrouting
             if ($s.mtu) { $obj.MTU = $s.mtu }
-            $obj.Interface = $s.ifaces.ToString()
-            $obj.Tagged = $s.tagged
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
+
+[DscResource()]
+class LBVLANInterfaceBinding {
+    [DscProperty(Key)]
+    [int]$VLANID
+
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
+
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN
+
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
+
+    [DscProperty(Mandatory)]
+    [string]$Interface = "0/1"
+
+    [DscProperty()]
+    [ValidateSet($True,$False)]
+    [bool]$Tagged = $False
+
+    Init() {
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+    }
+
+    [void]Set() {
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.vlanid -ne $this.VLANID) {
+                            Write-Warning -Message "Setting VLANID cannot be changed to [$($this.VLANID)], resource can only be removed and recreated"
+                        }
+                        if ((!$NSObject.interface) -OR ($NSObject.interface -ne $this.Interface)) {
+                            Write-Verbose -Message "Setting Interface [$($this.Interface)]"
+                            Remove-VLAN-NSVLANInterfaceBinding -VLANID $this.VLANID -Interface $this.Interface -Confirm:$false
+                            if ($this.Tagged -eq 'No') {
+                                Add-VLAN-NSVLANInterfaceBinding -VLANID $this.VLANID -Interface $this.Interface
+                            }
+                            else {
+                                Add-VLAN-NSVLANInterfaceBinding -VLANID $this.VLANID -Interface $this.Interface -Tagged $this.Tagged
+                            }
+                        }
+                        if ((!$NSObject.tagged) -OR ($NSObject.Tagged -ne $this.Tagged)) {
+                            Write-Verbose -Message "Setting Tagged interface [$($this.Tagged)]"
+                            Remove-VLAN-NSVLANInterfaceBinding -VLANID $this.VLANID -Interface $this.Interface -Confirm:$false
+                            if ($this.Tagged -eq 'No') {
+                                Add-VLAN-NSVLANInterfaceBinding -VLANID $this.VLANID -Interface $this.Interface
+                            }
+                            else {
+                                Add-VLAN-NSVLANInterfaceBinding -VLANID $this.VLANID -Interface $this.Interface -Tagged $this.Tagged
+                            }
+                        }
+                   } else {
+                        Write-Verbose -Message "Feature enabled, [$($this.IPAddress)]"
+                        if ($this.Tagged -eq $False) {
+                                $params = @{
+                                    vlanid = $this.VLANID
+                                    interface = $this.Interface
+                                }
+
+                            Add-NSVLANInterfaceBinding @params -Confirm:$false
+                        }
+                        else {
+                                $params = @{
+                                    vlanid = $this.VLANID
+                                    interface = $this.Interface
+                                    tagged = $this.tagged
+                                }
+
+                            Add-NSVLANInterfaceBinding @params -Confirm:$false
+
+                        }
+                    }
+                } 'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        Remove-VLAN-NSVLANInterfaceBinding -VLANID $this.VLANID -Interface $this.Interface -Confirm:$false -ErrorAction SilentlyContinue
+                        Write-Verbose -Message "Removed VLANID interface Binding: $($this.VLANID)"
+                    }
+                }
+            }
+        Save-NSConfig
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
+
+ [bool]Test() {
+        $pass = $true
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                            # Run tests and set any needed attributes to match desired configuration
+                            if ($NSObject.vlanid -ne $this.VLANID) {
+                                Write-Verbose -Message "VLANID does not match [$($NSObject.vlanid) <> $($this.VLANID)]"
+                                $pass = $false
+                            }
+                            if ((!$NSObject.Interface) -OR ($NSObject.Interface -ne $this.Interface)) {
+                                Write-Verbose -Message "The interface does not match [$($NSObject.Interface) <> $($this.Interface)]"
+                                $pass = $false
+                            }
+                            if ((!$NSObject.Tagged) -OR ($NSObject.Tagged -ne $this.Tagged)) {
+                                Write-Verbose -Message "The interface's tag does not match [$($NSObject.Tagged) <> $($this.Tagged)]"
+                                $pass = $false
+                            }
+                    } else {
+                        Write-Verbose -Message "File[$($this.VLANID)] was not found"
+                        $pass = $false
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        $pass = $false
+                    }
+                }
+            }
+        } catch {
+            Write-Error 'There was a problem testing the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+        return $pass
+    }
+
+    [LBVLANInterfaceBinding]Get() {
+        $t = $null
+        $t = $this.Init()
+
+        try {
+            $s = Get-NSVLAN -VLANID $this.VLANID -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            $s = $null
+        }
+
+        $obj = [LBVLANInterfaceBinding]::new()
+        $obj.VLANID = $this.VLANID
+        $obj.Interface = $this.Interface
+        $obj.Tagged = $this.Tagged
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.VLANID = $s.id
+            if ($s.ifaces) { $obj.Interface = $s.ifaces } else { $obj.Interface= '' }
+            if ($s.tagifaces) { $obj.Tagged = $s.tagifaces } else { $obj.Tagged = '' }
         } else {
             $obj.Ensure = [ensure]::Absent
         }
@@ -3986,8 +5314,8 @@ class LBResponderPolicyBinding {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -3995,7 +5323,7 @@ class LBResponderPolicyBinding {
     [string]$PolicyName
 
     [DscProperty()]
-    [ValidateSet('REQUEST','RESPONSE')] 
+    [ValidateSet('REQUEST','RESPONSE')]
     [string]$Bindpoint = 'REQUEST'
 
     [DscProperty()]
@@ -4039,7 +5367,7 @@ class LBResponderPolicyBinding {
                             policyname = $this.PolicyName
                             bindpoint = $this.Bindpoint
                             priority = $this.Priority
-                        }                         
+                        }
                        Add-NSLBVirtualServerResponderPolicyBinding @params -Confirm:$false
                     }
                 } 'Absent' {
@@ -4049,6 +5377,7 @@ class LBResponderPolicyBinding {
                     }
                 }
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -4078,7 +5407,7 @@ class LBResponderPolicyBinding {
                             if ($NSObject.PolicyName -ne $this.PolicyName) {
                                 Write-Verbose -Message "PolicyName does not match [$($NSObject.PolicyName) <> $($this.PolicyName)]"
                                 $pass = $false
-                            }    
+                            }
                     } else {
                         Write-Verbose -Message "File[$($this.VirtualServerName > $this.PolicyName)] was not found"
                         $pass = $false
@@ -4100,7 +5429,7 @@ class LBResponderPolicyBinding {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBResponderPolicyBinding]Get() {
@@ -4112,7 +5441,7 @@ class LBResponderPolicyBinding {
         } catch {
             $s = $null
         }
-        
+
         $obj = [LBResponderPolicyBinding]::new()
         $obj.VirtualServerName = $this.VirtualServerName
         $obj.PolicyName = $this.PolicyName
@@ -4128,210 +5457,178 @@ class LBResponderPolicyBinding {
     }
 }
 
+[DscResource()]
+class LBServiceGroupMember {
+    [DscProperty(Key)]
+    [string]$ServiceGroup
 
-# [DscResource()]
-# class LBServiceGroupMember {
-#     [DscProperty(Key)]
-#     [string]$Name
+    [DscProperty(Mandatory)]
+    [string]$ServerName
 
-#     [DscProperty(Mandatory)]
-#     [string]$Name    
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
 
-#     [DscProperty()]
-#     [Ensure]$Ensure = [Ensure]::Present
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN
 
-#     [DscProperty(Mandatory)]
-#     [string]$NetScalerFQDN    
-    
-#     [DscProperty(Mandatory)]
-#     [pscredential]$Credential
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
 
-#     [DscProperty(Mandatory)]
-#     [string]$ServerName
+    [DscProperty(Mandatory)]
+    [int]$Port = 80
 
-#     [DscProperty(Mandatory)]
-#     [int]$Port = 80
+    [DscProperty()]
+    [ValidateSet('ENABLED','DISABLED')]
+    [string]$State = 'ENABLED'
 
-#     [DscProperty(Mandatory)]
-#     [int]$Weight = 1
+    Init() {
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+    }
 
-#     [DscProperty(Mandatory)]
-#     [int[]]$ServerID
+    [void]Set() {
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
 
-#     [DscProperty(Mandatory)]
-#     [int[]]$HashID   
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
 
-#     [DscProperty(Mandatory)]
-#     [ValidateSet('ENABLED','DISABLED')] 
-#     [string[]]$State
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if (($NSObject.ServiceGroup -ne $this.ServiceGroup) -OR ($NSObject.ServerName -ne $this.ServerName) -OR ($NSObject.Port -ne $this.Port) -OR ($NSObject.State -ne $this.State)) {
+                            Remove-NSLBServiceGroupMemberBinding -ServiceName $this.ServiceName -ServerName $this.ServerName -Port $this.port
 
-#     Init() {
-#         try {
-#             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
-#             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
-#         } catch {
-#             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
-#         }
-#     }
+                            $params = @{
+                                Name = $this.ServiceGroup
+                                ServerName = $this.ServerName
+                                Port = $this.Port
+                                State = $this.State
+                            }
 
-#     [void]Set() {
-#         $t = $null
-#         $t = $this.Init()
-#         $NSObject = $this.Get()
+                            Add-NSLBServiceGroupMemberBinding @params -Confirm:$false
+                        }
+                   } else {
+                        Write-Verbose -Message "Added binding for, [$($this.ServiceGroup)]"
+                        $params = @{
+                            ServiceName = $this.ServiceGroup
+                            ServerName = $this.ServerName
+                            Port = $this.Port
+                            State = $this.State
+                        }
+                       Add-NSLBServiceGroupMemberBinding @params -Confirm:$false
+                    }
+                } 'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        Remove-NSLBServiceGroupMemberBinding -ServiceName $this.ServiceName -ServerName $this.ServerName -Port $this.Port -ErrorAction SilentlyContinue
+                        Write-Verbose -Message "Removed $this.ServerName from: $this.ServiceGroup"
+                    }
+                }
+            }
+        Save-NSConfig
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
 
-#         try {
-#             Import-Module -Name Netscaler -Verbose:$false -Debug:$false
-#             Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
-#         } catch {
-#             throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
-#         }
+ [bool]Test() {
+        $pass = $true
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                            # Run tests and set any needed attributes to match desired configuration
+                            if ($NSObject.ServiceGroup -ne $this.ServiceGroup) {
+                                Write-Verbose -Message "ServiceGroup does not match [$($NSObject.ServiceGroup) <> $($this.ServiceGroup)]"
+                                $pass = $false
+                            }
+                            if ($NSObject.ServerName -ne $this.ServerName) {
+                                Write-Verbose -Message "ServerName does not match [$($NSObject.ServerName) <> $($this.ServerName)]"
+                                $pass = $false
+                            }
+                            if ($NSObject.Port -ne $this.Port) {
+                                Write-Verbose -Message "Port does not match [$($NSObject.Port) <> $($this.Port)]"
+                                $pass = $false
+                            }
+                            if ($NSObject.State -ne $this.State) {
+                                Write-Verbose -Message "State does not match [$($NSObject.State) <> $($this.State)]"
+                                $pass = $false
+                            }
+                    } else {
+                        Write-Verbose -Message "Resource [$($this.ServiceGroup > $this.ServerName)] was not found"
+                        $pass = $false
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        $pass = $false
+                    }
+                }
+            }
+        } catch {
+            Write-Error 'There was a problem testing the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+        return $pass
+    }
 
-#         try {
-#             switch ($this.Ensure) {
-#                 'Present' {
-#                     if ($this.Ensure -eq $NSObject.Ensure) {
-#                         # Run tests and set any needed attributes to match desired configuration
-#                         if (($NSObject.Name -ne $this.Name) -OR ($NSObject.ServerName -ne $this.ServerName) -OR ($NSObject.Port -ne $this.Port) -OR ($NSObject.Weight -ne $this.Weight) -OR ($NSObject.State -ne $this.State)) {
-#                             Remove-NSLBServiceGroupMemberBinding -Name $this.Name -ServerName $this.ServerName -Port $this.port
-#                             New-NSLBServiceGroupMember -Name $this.Name -ServerName $this.ServerName -Port $this.Port -Weight $this.Weight -State $this.State
-#                         }
-#                    } else {
-#                         Write-Verbose -Message "Added binding for, [$($this.VirtualServerName)]"
-#                         $params = @{
-#                             Name = $this.Name
-#                             ServerName = $this.ServerName
-#                             Port = $this.Port
-#                             State = $this.State
-#                             weight = $this.weight
-#                         }
-#                         if ($PSBoundParameters.ContainsKey('ServerID')) {
-#                             $params.Add('ServerID', $this.ServerID)
-#                         }
-#                         if ($PSBoundParameters.ContainsKey('HashID')) {
-#                             $params.Add('HashID', $this.HashID)
-#                         }                        
-#                        New-NSLBServiceGroupMember @params -Confirm:$false
-#                     }
-#                 } 'Absent' {
-#                     if ($this.Ensure -ne $NSObject.Ensure) {
-#                         Remove-NSLBServiceGroupMemberBinding -Name $this.Name -ServerName $this.ServerName -ErrorAction SilentlyContinue
-#                         Write-Verbose -Message "Removed $this.ServerName from: $this.Name"
-#                     }
-#                 }
-#             }
-#         } catch {
-#             Write-Error 'There was a problem setting the resource'
-#             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
-#             Write-Error $_
-#         }
-#         try {
-#             Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-#         } catch {
-#             # Do nothing
-#         }
-#     }
+    [LBServiceGroupMember]Get() {
+        $t = $null
+        $t = $this.Init()
 
-#  [bool]Test() {
-#         $pass = $true
-#         $t = $null
-#         $t = $this.Init()
-#         $NSObject = $this.Get()
-#         try {
-#             switch ($this.Ensure) {
-#                 'Present' {
-#                     if ($this.Ensure -eq $NSObject.Ensure) {
-#                             # Run tests and set any needed attributes to match desired configuration
-#                             if ($NSObject.Name -ne $this.Name) {
-#                                 Write-Verbose -Message "ServiceGroupName does not match [$($NSObject.Name) <> $($this.Name)]"
-#                                 $pass = $false
-#                             }
-#                             if ($NSObject.ServerName -ne $this.ServerName) {
-#                                 Write-Verbose -Message "ServerName does not match [$($NSObject.ServerName) <> $($this.ServerName)]"
-#                                 $pass = $false
-#                             }
-#                             if ($NSObject.Port -ne $this.Port) {
-#                                 Write-Verbose -Message "Port does not match [$($NSObject.Port) <> $($this.Port)]"
-#                                 $pass = $false
-#                             }
-#                             if ($NSObject.Weight -ne $this.Weight) {
-#                                 Write-Verbose -Message "Weight does not match [$($NSObject.Weight) <> $($this.Weight)]"
-#                                 $pass = $false
-#                             }
-#                             if ($NSObject.ServerId -ne $this.ServerId) {
-#                                 Write-Verbose -Message "ServerId does not match [$($NSObject.ServerId) <> $($this.ServerId)]"
-#                                 $pass = $false
-#                             }
-#                             if ($NSObject.HashId -ne $this.HashId) {
-#                                 Write-Verbose -Message "HashId does not match [$($NSObject.HashId) <> $($this.HashId)]"
-#                                 $pass = $false
-#                             }
-#                             if ($NSObject.State -ne $this.State) {
-#                                 Write-Verbose -Message "State does not match [$($NSObject.State) <> $($this.State)]"
-#                                 $pass = $false
-#                             }
-#                     } else {
-#                         Write-Verbose -Message "File[$($this.VirtualServerName > $this.PolicyName)] was not found"
-#                         $pass = $false
-#                     }
-#                 }
-#                 'Absent' {
-#                     if ($this.Ensure -ne $NSObject.Ensure) {
-#                         $pass = $false
-#                     }
-#                 }
-#             }
-#         } catch {
-#             Write-Error 'There was a problem testing the resource'
-#             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
-#             Write-Error $_
-#         }
-#         try {
-#             Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-#         } catch {
-#             # Do nothing
-#         }
-#         return $pass        
-#     }
+        $s = $null
 
-#     [LBServiceGroupMember]Get() {
-#         $t = $null
-#         $t = $this.Init()
+        try {
+            $s = Get-NSLBServiceGroupMemberBinding -ServiceName $this.ServiceGroup | where servername -eq $this.servername -ErrorAction SilentlyContinue
+        } catch {
+            $s = $null
+        }
 
-#         try {
-#             $s = Get-NSLBServiceGroupMemberBinding -Name $this.Name -Verbose:$false -ErrorAction SilentlyContinue
-#         } catch {
-#             $s = $null
-#         }
-        
-#         $obj = [LBServiceGroupMember]::new()
-#         $obj.Name = $this.Name
-#         $obj.ServerName = $this.ServerName
-#         $obj.Port = @()
-#         # $obj.Weight = $this.Weight
-#         # $obj.ServerId = $this.ServerId
-#         # $obj.HashId = $this.HashId
-#         # $obj.State = $this.State   
-#         if ($s) {
-#             $obj.Ensure = [ensure]::Present
-#             $obj.Name = $s.servicegroupname
-#             $obj.ServerName = $s.servername
-#             $obj.Port = [int32[]]$s.port
-#             # $s.Port | % { $obj.port += $_.toString() }
-#             # for ($i=0;$i -lt $s.port.Length; $i++) { 
-#             #     $z = $s.port[$i].toString()
-#             #     $obj.Port = $obj.Port.Add("$z")
-#             # }
-#             # $obj.Weight = $s.weight
-#             # $obj.ServerId = $s.serverid
-#             # $obj.HashId = $s.hashid
-#             # $obj.State = $s.state
-#         } else {
-#             $obj.Ensure = [ensure]::Absent
-#         }
-#         Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
-#         return $obj
-#     }
-# }
+        $obj = [LBServiceGroupMember]::new()
+        $obj.ServiceGroup = $this.ServiceGroup
+        $obj.ServerName = $this.ServerName
+        $obj.Port = $this.Port
+        $obj.State = $this.State
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.ServiceGroup = $s.servicegroupname
+            $obj.ServerName = $s.servername
+            $obj.Port = $s.port
+            $obj.State = $s.state
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
 
 [DscResource()]
 class LBService {
@@ -4342,8 +5639,8 @@ class LBService {
     [Ensure]$Ensure = [Ensure]::Present
 
     [DscProperty(Mandatory)]
-    [string]$NetScalerFQDN    
-    
+    [string]$NetScalerFQDN
+
     [DscProperty(Mandatory)]
     [pscredential]$Credential
 
@@ -4465,11 +5762,11 @@ class LBService {
 
     [DscProperty()]
     [ValidateRange(0, 4294967287)]
-    [int]$TrafficDomain     
+    [int]$TrafficDomain
 
     [DscProperty()]
     [ValidateRange(0, 65535)]
-    [int]$ServerID             
+    [int]$ServerID
 
     [DscProperty()]
     [ValidateRange(0, 65535)]
@@ -4557,80 +5854,80 @@ class LBService {
                                 Write-Verbose -Message "State does not match [$($NSObject.CurState) <> $($this.State)]"
                                 Set-NSLBService -Name $this.Name -IPAddress $this.IPAddress -State $this.State
                                 }
-                            }                                     
-                        }                
+                            }
+                        }
                         if ($NSObject.HealthMonitor -ne $this.HealthMonitor)  {
                             Set-NSLBService -Name $this.Name -HealthMonitor $this.HealthMonitor
                         }
                         if ($NSObject.AppFlowLog -ne $this.AppFlowLog)  {
                             Set-NSLBService -Name $this.Name -AppFlowLog $this.AppFlowLog
-                        }     
+                        }
                         if ($NSObject.Comment -ne $this.Comment)  {
                             Set-NSLBService -Name $this.Name -Comment $this.Comment
-                        }     
+                        }
                         if ($NSObject.SureConnect -ne $this.SureConnect)  {
                             Set-NSLBService -Name $this.Name -SureConnect $this.SureConnect
-                        }     
+                        }
                         if ($NSObject.SurgeProtection -ne $this.SurgeProtection)  {
                             Set-NSLBService -Name $this.Name -SurgeProtection $this.SurgeProtection
-                        }     
+                        }
                         if ($NSObject.UseProxyPort -ne $this.UseProxyPort)  {
                             Set-NSLBService -Name $this.Name -UseProxyPort $this.UseProxyPort
-                        }     
+                        }
                         if ($NSObject.DownStateFlush -ne $this.DownStateFlush)  {
                             Set-NSLBService -Name $this.Name -DownStateFlush $this.DownStateFlush
-                        }     
+                        }
                         if ($NSObject.UseClientIP -ne $this.UseClientIP)  {
                             Set-NSLBService -Name $this.Name -UseClientIP $this.UseClientIP
-                        }     
+                        }
                         if ($NSObject.ClientKeepAlive -ne $this.ClientKeepAlive)  {
                             Set-NSLBService -Name $this.Name -ClientKeepAlive $this.ClientKeepAlive
-                        }     
+                        }
                         if ($NSObject.TCPBuffering -ne $this.TCPBuffering)  {
                             Set-NSLBService -Name $this.Name -TCPBuffering $this.TCPBuffering
-                        }     
+                        }
                         if ($NSObject.HTTPCompression -ne $this.HTTPCompression)  {
                             Set-NSLBService -Name $this.Name -HTTPCompression $this.HTTPCompression
-                        }     
+                        }
                         if ($NSObject.ClientIP -ne $this.ClientIP)  {
                             Write-Warning -Message "Setting Name cannot be changed to [$($this.ClientIP)], resource can only be removed and recreated"
                         }
                         # if ($NSObject.PathMonitor -ne $this.PathMonitor)  {
                         #     Set-NSLBService -Name $this.Name -PathMonitor $this.PathMonitor
-                        # }    
+                        # }
                         # if ($NSObject.PathMonitorIndividual -ne $this.PathMonitorIndividual)  {
                         #     Set-NSLBService -Name $this.Name -PathMonitorIndividual $this.HTTPCompression
-                        # }    
+                        # }
                         if ($NSObject.RTPSessionIDRemap -ne $this.RTPSessionIDRemap)  {
                             Write-Warning -Message "Setting Name cannot be changed to [$($this.ClientIP)], resource can only be removed and recreated"
-                        }    
+                        }
                         if ($NSObject.CustomServerID -ne $this.CustomServerID)  {
                             Write-Warning -Message "Setting Name cannot be changed to [$($this.CustomServerID)], resource can only be removed and recreated"
-                        }    
+                        }
                         if ($NSObject.MaxBandwidthKbps -ne $this.MaxBandwidthKbps)  {
                             Set-NSLBService -Name $this.Name -MaxBandwidthKbps $this.MaxBandwidthKbps
-                        }    
+                        }
                         if ($NSObject.AccessDown -ne $this.AccessDown)  {
                             Set-NSLBService -Name $this.Name -AccessDown $this.AccessDown
-                        }    
+                        }
                         # if ($NSObject.TCPProfileName -ne $this.TCPProfileName)  {
                         #     Set-NSLBService -Name $this.Name -TCPProfileName $this.TCPProfileName
                         # }
                         # if ($NSObject.HTTPProfileName -ne $this.HTTPProfileName)  {
                         #     Set-NSLBService -Name $this.Name -HTTPProfileName $this.HTTPProfileName
-                        # }    
+                        # }
                         # if ($NSObject.NetProfileName -ne $this.NetProfileName)  {
                         #     Set-NSLBService -Name $this.Name -NetProfileName $this.NetProfileName
-                        # }    
+                        # }
                         # if ($NSObject.HashID -ne $this.HashID)  {
                         #     Set-NSLBService -Name $this.Name -HashID $this.HashID
-                        # }                            
+                        # }
                         # if ($NSObject.ProcessLocal -ne $this.ProcessLocal)  {
                         #     Set-NSLBService -Name $this.Name -ProcessLocal $this.ProcessLocal
-                        # }    
+                        # }
                         # if ($NSObject.TrafficDomain -ne $this.TrafficDomain)  {
                         #     Write-Warning -Message "Setting Name cannot be changed to [$($this.TrafficDomain)], resource can only be removed and recreated"
-                        # }    
+                        # }
                         # if ($NSObject.ServerID -ne $this.ServerID)  {
                         #     Set-NSLBService -Name $this.Name -ServerID $this.ServerID
                         # }
@@ -4645,10 +5942,10 @@ class LBService {
                         }
                         # if ($NSObject.ClientIdleTimeout -ne $this.ClientIdleTimeout)  {
                         #     Set-NSLBService -Name $this.Name -ClientIdleTimeout $this.ClientIdleTimeout
-                        # } 
+                        # }
                         # if ($NSObject.ServerIdleTimeout -ne $this.ServerIdleTimeout)  {
                         #     Set-NSLBService -Name $this.Name -ServerIdleTimeout $this.ServerIdleTimeout
-                        # }                                                 
+                        # }
                    } else {
                         Write-Verbose -Message "Added Service, [$($this.Name)]"
                         $params = @{
@@ -4657,7 +5954,7 @@ class LBService {
                             port = $this.Port
                             servername = $this.ServerName
                             comment = $this.Comment
-                        }                         
+                        }
                        New-NSLBService @params -Confirm:$false
                     }
                 } 'Absent' {
@@ -4667,6 +5964,7 @@ class LBService {
                     }
                 }
             }
+        Save-NSConfig
         } catch {
             Write-Error 'There was a problem setting the resource'
             Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
@@ -4700,11 +5998,11 @@ class LBService {
                             if ($NSObject.IPAddress -ne $this.IPAddress) {
                                 Write-Verbose -Message "IPAddress does not match [$($NSObject.IPAddress) <> $($this.IPAddress)]"
                                 $pass = $false
-                            }    
+                            }
                             if ($NSObject.Port -ne $this.Port) {
                                 Write-Verbose -Message "Port does not match [$($NSObject.Port) <> $($this.Port)]"
                                 $pass = $false
-                            }    
+                            }
                             if ($NSObject.ServerName -ne $this.ServerName) {
                                 Write-Verbose -Message "ServerName does not match [$($NSObject.ServerName) <> $($this.ServerName)]"
                                 $pass = $false
@@ -4727,28 +6025,28 @@ class LBService {
                                     Write-Verbose -Message "ServerName does not match [$($NSObject.CurState) <> $($this.State)]"
                                     $pass = $false
                                     }
-                                }                                     
-                            }                                                              
+                                }
+                            }
                             # if ($NSObject.CacheType -ne $this.CacheType) {
                             #     Write-Verbose -Message "CacheType does not match [$($NSObject.CacheType) <> $($this.CacheType)]"
                             #     $pass = $false
-                            # }    
+                            # }
                             if ($NSObject.Cacheable -ne $this.Cacheable) {
                                 Write-Verbose -Message "Cacheable does not match [$($NSObject.Cacheable) <> $($this.Cacheable)]"
                                 $pass = $false
-                            }    
+                            }
                             if ($NSObject.HealthMonitor -ne $this.HealthMonitor) {
                                 Write-Verbose -Message "HealthMonitor does not match [$($NSObject.HealthMonitor) <> $($this.HealthMonitor)]"
                                 $pass = $false
-                            }    
+                            }
                             if ($NSObject.AppFlowLog -ne $this.AppFlowLog) {
                                 Write-Verbose -Message "AppFlowLog does not match [$($NSObject.AppFlowLog) <> $($this.AppFlowLog)]"
                                 $pass = $false
-                            }    
+                            }
                             if ($NSObject.Comment -ne $this.Comment) {
                                 Write-Verbose -Message "Comment does not match [$($NSObject.Comment) <> $($this.Comment)]"
                                 $pass = $false
-                            }    
+                            }
                             if ($NSObject.SureConnect -ne $this.SureConnect) {
                                 Write-Verbose -Message "SureConnect does not match [$($NSObject.SureConnect) <> $($this.SureConnect)]"
                                 $pass = $false
@@ -4796,47 +6094,47 @@ class LBService {
                             if ($NSObject.RTPSessionIDRemap -ne $this.RTPSessionIDRemap) {
                                 Write-Verbose -Message "RTPSessionIDRemap does not match [$($NSObject.RTPSessionIDRemap) <> $($this.RTPSessionIDRemap)]"
                                 $pass = $false
-                            }   
+                            }
                             if ($NSObject.CustomServerID -ne $this.CustomServerID) {
                                 Write-Verbose -Message "CustomServerID does not match [$($NSObject.CustomServerID) <> $($this.CustomServerID)]"
                                 $pass = $false
-                            }   
+                            }
                             if ($NSObject.MaxBandwidthKbps -ne $this.MaxBandwidthKbps) {
                                 Write-Verbose -Message "MaxBandwidthKbps does not match [$($NSObject.MaxBandwidthKbps) <> $($this.MaxBandwidthKbps)]"
                                 $pass = $false
-                            }   
+                            }
                             if ($NSObject.AccessDown -ne $this.AccessDown) {
                                 Write-Verbose -Message "AccessDown does not match [$($NSObject.AccessDown) <> $($this.AccessDown)]"
                                 $pass = $false
-                            }   
+                            }
                             if ($NSObject.TCPProfileName -ne $this.TCPProfileName) {
                                 Write-Verbose -Message "TCPProfileName does not match [$($NSObject.TCPProfileName) <> $($this.TCPProfileName)]"
                                 $pass = $false
-                            }   
+                            }
                             if ($NSObject.HTTPProfileName -ne $this.HTTPProfileName) {
                                 Write-Verbose -Message "HTTPProfileName does not match [$($NSObject.HTTPProfileName) <> $($this.HTTPProfileName)]"
                                 $pass = $false
-                            }   
+                            }
                             if ($NSObject.NetProfileName -ne $this.NetProfileName) {
                                 Write-Verbose -Message "NetProfileName does not match [$($NSObject.NetProfileName) <> $($this.NetProfileName)]"
                                 $pass = $false
-                            }   
+                            }
                             if ($NSObject.HashID -ne $this.HashID) {
                                 Write-Verbose -Message "HashID does not match [$($NSObject.HashID) <> $($this.HashID)]"
                                 $pass = $false
-                            }   
+                            }
                             if ($NSObject.ProcessLocal -ne $this.ProcessLocal) {
                                 Write-Verbose -Message "ProcessLocal does not match [$($NSObject.ProcessLocal) <> $($this.ProcessLocal)]"
                                 $pass = $false
-                            }   
+                            }
                             if ($NSObject.TrafficDomain -ne $this.TrafficDomain) {
                                 Write-Verbose -Message "TrafficDomain does not match [$($NSObject.TrafficDomain) <> $($this.TrafficDomain)]"
                                 $pass = $false
-                            }  
+                            }
                             if ($NSObject.ServerID -ne $this.ServerID) {
                                 Write-Verbose -Message "ServerID does not match [$($NSObject.ServerID) <> $($this.ServerID)]"
                                 $pass = $false
-                            }  
+                            }
                             if ($NSObject.MonitorThreshold -ne $this.MonitorThreshold) {
                                 Write-Verbose -Message "MonitorThreshold does not match [$($NSObject.MonitorThreshold) <> $($this.MonitorThreshold)]"
                                 $pass = $false
@@ -4856,7 +6154,7 @@ class LBService {
                             if ($NSObject.ServerIdleTimeout -ne $this.ServerIdleTimeout) {
                                 Write-Verbose -Message "ServerIdleTimeout does not match [$($NSObject.ServerIdleTimeout) <> $($this.ServerIdleTimeout)]"
                                 $pass = $false
-                            }                                                                                                                                                                     
+                            }
                     } else {
                         Write-Verbose -Message "File[$($this.VirtualServerName > $this.PolicyName)] was not found"
                         $pass = $false
@@ -4878,7 +6176,7 @@ class LBService {
         } catch {
             # Do nothing
         }
-        return $pass        
+        return $pass
     }
 
     [LBService]Get() {
@@ -4890,7 +6188,7 @@ class LBService {
         } catch {
             $s = $null
         }
-        
+
         $obj = [LBService]::new()
             $obj.Name = $this.Name
             $obj.ServiceType = $this.ServiceType
@@ -4938,8 +6236,8 @@ class LBService {
             $obj.IPAddress = $s.ipaddress
             $obj.Port = $s.port
             $obj.ServerName = $s.servername
-            # if ($s.cachetype -ne "SERVER") { 
-            #     $obj.CacheType = $s.cachetype 
+            # if ($s.cachetype -ne "SERVER") {
+            #     $obj.CacheType = $s.cachetype
             # } else {
             #     $obj.CacheType = "SERVER" }
             if ($s.cacheable) { $obj.Cacheable = $s.cacheable }

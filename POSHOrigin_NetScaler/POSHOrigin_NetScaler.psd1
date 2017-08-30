@@ -24,7 +24,7 @@
     RequiredModules = 'NetScaler'
 
     # DSC resources to export from this module
-    DscResourcesToExport = @('LBVirtualServer','LBServer','LBMonitor','LBServiceGroup','LBNTPServer','LBResponderPolicy','LBResponderAction','LBSSLCertificate','LBRewritePolicy','LBRewriteAction','LBDNSServer','LBNSMode','LBNSFeature','LBNSIP','LBNSVirtualServerBinding','LBSystemFile','LBVLAN','LBResponderPolicyBinding','LBServiceGroupMember','LBService')
+    DscResourcesToExport = @('LBVirtualServer','LBServer','LBMonitor','LBServiceGroupMonitorBinding','LBServiceGroup','LBNTPServer','LBResponderPolicy','LBResponderAction','LBResponderHTMLPage','LBRewritePolicy','LBRewriteAction','LBDNSServer','LBNSMode','LBNSFeature','LBNSIP','LBVirtualServerBinding','LBSystemFile','LBVLAN','LBResponderPolicyBinding','LBServiceGroupMember','LBService','LBServiceMonitorBinding','LBSSLCertificate','LBSSLCertificateBinding','LBSSLCertificateLink','LBSSLProfile','LBSSLProfileBinding')
 
     PrivateData = @{
         PSData = @{
