@@ -153,15 +153,10 @@ class LBVirtualServer {
                         Comment = $this.Comment
                         RedirectPortRewrite = $this.RedirectPortRewrite
                     }
-                    if ($null -ne $this.HttpRedirectURL) {
-                        $params.HttpRedirectURL = $this.HttpRedirectURL
-                    }
-                    if ($null -ne $this.ClientTimeout) {
-                        $params.ClientTimeout = $this.ClientTimeout
-                    }
-                    if ($null -ne $this.BackupVServer) {
-                        $params.BackupVServer = $this.BackupVServer
-                    }
+                    if ($this.HttpRedirectURL) { $params.HttpRedirectURL = $this.HttpRedirectURL}
+                    if ($this.ClientTimeout) { $params.ClientTimeout = $this.ClientTimeout }
+                    if ($this.BackupVServer) { $params.BackupVServer = $this.BackupVServer }
+
                     New-NSLBVirtualServer @params -ErrorAction SilentlyContinue
                 }
             } 'Absent' {
@@ -732,72 +727,30 @@ class LBServiceGroup {
                             servicetype = $this.ServiceType
                             state = $this.State
                             comment = $this.Comment
+                            ServerIdleTimeout = $this.ServerIdleTimeout
+                            ClientIdleTimeout = $this.ClientIdleTimeout
+                            HealthMonitor = $this.HealthMonitor
+                            SurgeProtection = $this.SurgeProtection
+                            SureConnect = $this.SureConnect
+                            AppFlowLog = $this.AppFlowLog
+                            ClientKeepAlive = $this.ClientKeepAlive
+                            ClientIP = $this.ClientIP
+                            AutoScale = $this.AutoScale
+                            Cacheable = $this.Cacheable
                         }
-                        if ($PSBoundParameters.ContainsKey('TrafficDomainId')) {
-                            $params.Add('TrafficDomainId', $this.TrafficDomainId)
-                        }
-                        if ($PSBoundParameters.ContainsKey('MaxClients')) {
-                            $params.Add('MaxClients', $this.MaxClients)
-                        }
-                        if ($PSBoundParameters.ContainsKey('CacheType')) {
-                            $params.Add('CacheType', $this.CacheType)
-                        }
-                        if ($PSBoundParameters.ContainsKey('AutoScale')) {
-                            $params.Add('AutoScale', $this.AutoScale)
-                        }
-                        if ($PSBoundParameters.ContainsKey('Cacheable')) {
-                            $params.Add('Cacheable', $this.Cacheable)
-                        }
-                        if ($PSBoundParameters.ContainsKey('HealthMonitor')) {
-                            $params.Add('HealthMonitor', $this.HealthMonitor)
-                        }
-                        if ($PSBoundParameters.ContainsKey('AppFlowLog')) {
-                            $params.Add('AppFlowLog', $this.AppFlowLog)
-                        }
-                        if ($PSBoundParameters.ContainsKey('SureConnect')) {
-                            $params.Add('SureConnect', $this.SureConnect)
-                        }
-                        if ($PSBoundParameters.ContainsKey('SurgeProtection')) {
-                            $params.Add('SurgeProtection', $this.SurgeProtection)
-                        }
-                        if ($PSBoundParameters.ContainsKey('UseProxyPort')) {
-                            $params.Add('UseProxyPort', $this.UseProxyPort)
-                        }
-                        if ($PSBoundParameters.ContainsKey('DownStateFlush')) {
-                            $params.Add('DownStateFlush', $this.DownStateFlush)
-                        }
-                        if ($PSBoundParameters.ContainsKey('UseClientIP')) {
-                            $params.Add('UseClientIP', $this.UseClientIP)
-                        }
-                        if ($PSBoundParameters.ContainsKey('ClientKeepAlive')) {
-                            $params.Add('ClientKeepAlive', $this.ClientKeepAlive)
-                        }
-                        if ($PSBoundParameters.ContainsKey('TCPBuffering')) {
-                            $params.Add('TCPBuffering', $this.TCPBuffering)
-                        }
-                        # if ($PSBoundParameters.ContainsKey('HTTPCompression')) {
-                        #     $params.Add('HTTPCompression', $this.HTTPCompression)
-                        # }
-                        if ($PSBoundParameters.ContainsKey('ClientIP')) {
-                            $params.Add('ClientIP', $this.ClientIP)
-                        }
-                        if ($PSBoundParameters.ContainsKey('MaxBandwidthKbps')) {
-                            $params.Add('MaxBandwidthKbps', $this.MaxBandwidthKbps)
-                        }
-                        if ($PSBoundParameters.ContainsKey('DownStateFlush')) {
-                            $params.Add('DownStateFlush', $this.DownStateFlush)
-                        }
-                        if ($PSBoundParameters.ContainsKey('MaxRequests')) {
-                            $params.Add('MaxRequests', $this.MaxRequests)
-                        }
-                        if ($PSBoundParameters.ContainsKey('ClientIdleTimeout')) {
-                            $params.Add('ClientIdleTimeout', $this.ClientIdleTimeout)
-                        }
-                        if ($PSBoundParameters.ContainsKey('ServerIdleTimeout')) {
-                            $params.Add('ServerIdleTimeout', $this.ServerIdleTimeout)
-                        }
+                        if ($this.TrafficDomainId) { $params.Add('TrafficDomainId', $this.TrafficDomainId) }
+                        if ($this.MaxClients) { $params.Add('MaxClients', $this.MaxClients) }
+                        if ($this.CacheType) { $params.Add('CacheType', $this.CacheType) }
+                        # if ($this.UseProxyPort) { $params.Add('UseProxyPort', $this.UseProxyPort) }
+                        # if ($this.DownStateFlush) { $params.Add('DownStateFlush', $this.DownStateFlush) }
+                        # if ($this.UseClientIP) { $params.Add('UseClientIP', $this.UseClientIP) }
+                        # if ($this.TCPBuffering) { $params.Add('TCPBuffering', $this.TCPBuffering) }
+                        # if ($this.HTTPCompression) { $params.Add('HTTPCompression', $this.HTTPCompression) }
+                        # if ($this.MaxBandwidthKbps) { $params.Add('MaxBandwidthKbps', $this.MaxBandwidthKbps) }
+                        if ($this.MaxRequests) { $params.Add('MaxRequests', $this.MaxRequests) }
+
                         New-NSLBServiceGroup @params -ErrorAction SilentlyContinue
-                    }
+                    }h
                 }
                 'Absent' {
                     if ($this.Ensure -ne $NSObject.Ensure) {
@@ -1270,7 +1223,7 @@ class LBMonitor {
                     }
                     if ($NSObject.httprequest -ne $this.HTTPRequest) {
                         Write-Verbose -Message "Setting HTTP Request was changed to [$($this.HTTPRequest)]"
-                        # Set-NSLBMonitor -Name $this.Name -HTTPRequest $this.HTTPRequest -Verbose:$false -ErrorAction SilentlyContinue
+                        Set-NSLBMonitor -Name $this.Name -HTTPRequest $this.HTTPRequest -Verbose:$false -ErrorAction SilentlyContinueg
                     }
                 } else {
                     Write-Verbose -Message "Creating monitor [$($this.Name)]"
@@ -1287,85 +1240,42 @@ class LBMonitor {
                         successretries = $this.SuccessRetries
                         failureRetries = $this.FailureRetries
                         state = $this.State
-                        destinationip = $this.DestinationIP
                         reverse = $this.Reverse
                         lrtm = $this.LRTM
                         transparent = $this.Transparent
                         tos = $this.TOS
                         secure = $this.Secure
                     }
-                    if ($PSBoundParameters.ContainsKey('DestinationPort')) {
-                        $params.Add('DestinationPort', $this.DestinationPort)
-                    }
-                    if ($PSBoundParameters.ContainsKey('Transparent')) {
-                        $params.Add('Transparent', $this.Transparent)
-                    }
-                    if ($PSBoundParameters.ContainsKey('LRTM')) {
-                        $params.Add('LRTM', $this.LRTM)
-                    }
-                    if ($PSBoundParameters.ContainsKey('Secure')) {
-                        $params.Add('Secure', $this.Secure)
-                    }
-                    if ($PSBoundParameters.ContainsKey('IPTunnel')) {
-                        $params.Add('IPTunnel', $this.IPTunnel)
-                    }
-                    if ($PSBoundParameters.ContainsKey('TOS')) {
-                        $params.Add('TOS', $this.TOS)
-                    }
-                    if ($PSBoundParameters.ContainsKey('Reverse')) {
-                        $params.Add('Reverse', $this.Reverse)
-                    }
-                    if ($PSBoundParameters.ContainsKey('DestinationIP')) {
-                        $params.Add('DestinationIP', $this.DestinationIP)
-                    }
-                    if ($PSBoundParameters.ContainsKey('Deviation')) {
-                        $params.Add('Deviation', $this.Deviation)
-                    }
-                    if ($PSBoundParameters.ContainsKey('ResponseTimeoutThreshold')) {
-                        $params.Add('ResponseTimeoutThreshold', $this.ResponseTimeoutThreshold)
-                    }
-                    if ($PSBoundParameters.ContainsKey('AlertRetries')) {
-                        $params.Add('AlertRetries', $this.AlertRetries)
-                    }
-                    if ($PSBoundParameters.ContainsKey('FailureRetries')) {
-                        $params.Add('FailureRetries', $this.FailureRetries)
-                    }
-                    if ($PSBoundParameters.ContainsKey('NetProfile')) {
-                        $params.Add('NetProfile', $this.NetProfile)
-                    }
-                    if ($PSBoundParameters.ContainsKey('TOSID')) {
-                        $params.Add('TOSID', $this.TOSID)
-                    }
-                    if ($PSBoundParameters.ContainsKey('ScriptName')) {
-                        $params.Add('ScriptName', $this.ScriptName)
-                    }
-                    if ($PSBoundParameters.ContainsKey('DispatcherIP')) {
-                        $params.Add('DispatcherIP', $this.DispatcherIP)
-                    }
-                    if ($PSBoundParameters.ContainsKey('ScriptArgs')) {
-                        $params.Add('ScriptArgs', $this.ScriptArgs)
-                    }
-                    if ($PSBoundParameters.ContainsKey('CustomProperty')) {
+                    if ($this.DestinationPort) { $params.Add('DestinationPort', $this.DestinationPort) }
+                    if ($this.Transparent) { $params.Add('Transparent', $this.Transparent) }
+                    if ($this.LRTM) { $params.Add('LRTM', $this.LRTM) }
+                    if ($this.Secure) { $params.Add('Secure', $this.Secure) }
+                    if ($this.IPTunnel) { $params.Add('IPTunnel', $this.IPTunnel) }
+                    if ($this.TOS) { $params.Add('TOS', $this.TOS) }
+                    if ($this.Reverse) { $params.Add('Reverse', $this.Reverse) }
+                    # if ($this.DestinationIP) { $params.Add('DestinationIP', $this.DestinationIP) }
+                    if ($this.DestinationIP) { $params.Add('DestinationIP', $this.DestinationIP) }
+                    if ($this.Deviation) { $params.Add('Deviation', $this.Deviation) }
+                    if ($this.ResponseTimeoutThreshold) { $params.Add('ResponseTimeoutThreshold', $this.ResponseTimeoutThreshold) }
+                    if ($this.AlertRetries) { $params.Add('AlertRetries', $this.AlertRetries) }
+                    if ($this.FailureRetries) { $params.Add('FailureRetries', $this.FailureRetries) }
+                    if ($this.NetProfile) { $params.Add('NetProfile', $this.NetProfile) }
+                    if ($this.TOSID) { $params.Add('TOSID', $this.TOSID) }
+                    if ($this.ScriptName) { $params.Add('ScriptName', $this.ScriptName) }
+                    if ($this.DispatcherIP) { $params.Add('DispatcherIP', $this.DispatcherIP) }
+                    if ($this.ScriptArgs) { $params.Add('ScriptArgs', $this.ScriptArgs) }
+                    if ($this.CustomProperty) {
                         ## Add each custom property to the $params Hashtable
                         foreach ($CustomProperty in $this.CustomProperty.Keys) {
                             $params.Add($CustomProperty.ToLower(), $CustomProperty[$CustomProperty])
                         }
                     }
-                    if ($PSBoundParameters.ContainsKey('ResponseCode')) {
-                        $params.Add('ResponseCode', $this.ResponseCode)
-                    }
-                    if ($PSBoundParameters.ContainsKey('HTTPRequest')) {
-                        $params.Add('HTTPRequest', $this.HTTPRequest)
-                    }
-                    if ($PSBoundParameters.ContainsKey('Send')) {
-                        $params.Add('Send', $this.Send)
-                    }
-                    if ($PSBoundParameters.ContainsKey('Recv')) {
-                        $params.Add('Recv', $this.Recv)
-                    }
-                    if ($PSBoundParameters.ContainsKey('DispatcherPort')) {
-                        $params.Add('DispatcherPort', $this.DispatcherPort)
-                    }
+                    if ($this.ResponseCode) { $params.Add('ResponseCode', $this.ResponseCode) }
+                    if ($this.HTTPRequest) { $params.Add('HTTPRequest', $this.HTTPRequest) }
+                    if ($this.Send) { $params.Add('Send', $this.Send) }
+                    if ($this.Recv) { $params.Add('Recv', $this.Recv) }
+                    if ($this.DispatcherPort) { $params.Add('DispatcherPort', $this.DispatcherPort) }
+
                     New-NSLBMonitor @params -ErrorAction SilentlyContinue
                 }
             } 'Absent' {
@@ -1598,9 +1508,6 @@ class LBServiceGroupMonitorBinding {
     [DscProperty()]
     [int]$Weight = 1
 
-    [DscProperty()]
-    [int]$Port
-
 
     Init() {
         try {
@@ -1631,22 +1538,22 @@ class LBServiceGroupMonitorBinding {
                         if ($NSObject.ServiceGroupName -ne $this.ServiceGroupName) {
                             Write-Warning -Message "Setting ServiceGroupName [$($this.ServiceGroupName)] does not match, rebinding"
                             Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
-                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -State $this.State -Confirm:$false
                         }
                         if ($NSObject.MonitorName -ne $this.MonitorName) {
                             Write-Warning -Message "Setting MonitorName [$($this.MonitorName)] does not match, rebinding"
                             Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
-                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -State $this.State -Confirm:$false
                         }
                         if ($NSObject.Weight -ne $this.Weight) {
                             Write-Warning -Message "Setting Weight [$($this.Weight)] does not match, rebinding"
                             Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
-                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -State $this.State -Confirm:$false
                         }
                         if ($NSObject.State -ne $this.State) {
                             Write-Warning -Message "Setting State [$($this.State)] does not match, rebinding"
                             Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
-                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -State $this.State -Confirm:$false
                         }
                    } else {
                         Write-Verbose -Message "Added [$($this.MonitorName)] binding for, [$($this.ServiceGroupName)]"
@@ -1655,7 +1562,6 @@ class LBServiceGroupMonitorBinding {
                             MonitorName = $this.MonitorName
                             Weight = $this.Weight
                             State = $this.State
-                            Port = $this.Port
                         }
                        Add-NSLBServiceGroupMonitorBinding @params -Confirm:$false
                     }
@@ -1688,27 +1594,24 @@ class LBServiceGroupMonitorBinding {
             switch ($this.Ensure) {
                 'Present' {
                     if ($this.Ensure -eq $NSObject.Ensure) {
-                            # Run tests and set any needed attributes to match desired configuration
-                            if ($NSObject.ServiceGroupName -ne $this.ServiceGroupName) {
-                                Write-Verbose -Message "ServiceGroupName does not match [$($NSObject.servicegroupname) <> $($this.ServiceGroupName)]"
-                                $pass = $false
-                            }
-                            if ($NSObject.MonitorName -ne $this.MonitorName) {
-                                Write-Verbose -Message "MonitorName does not match [$($NSObject.MonitorName) <> $($this.MonitorName)]"
-                                $pass = $false
-                            }
-                            if ($NSObject.State -ne $this.State) {
-                                Write-Verbose -Message "State does not match [$($NSObject.State) <> $($this.State)]"
-                                $pass = $false
-                            }
-                            if ($NSObject.Weight -ne $this.Weight) {
-                                Write-Verbose -Message "Weight does not match [$($NSObject.Weight) <> $($this.MonitorName)]"
-                                $pass = $false
-                            }
-                            if ((!$NSObject.Port) -AND ($NSObject.Port -ne $this.Port)) {
-                                Write-Verbose -Message "Port does not match [$($NSObject.Port) <> $($this.Port)]"
-                                $pass = $false
-                            }
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.ServiceGroupName -ne $this.ServiceGroupName) {
+                            Write-Verbose -Message "ServiceGroupName does not match [$($NSObject.servicegroupname) <> $($this.ServiceGroupName)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.MonitorName -ne $this.MonitorName) {
+                            Write-Verbose -Message "MonitorName does not match [$($NSObject.MonitorName) <> $($this.MonitorName)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.State -ne $this.State) {
+                            Write-Verbose -Message "State does not match [$($NSObject.State) <> $($this.State)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.Weight -ne $this.Weight) {
+                            Write-Verbose -Message "Weight does not match [$($NSObject.Weight) <> $($this.MonitorName)]"
+                            $pass = $false
+                        }
+
                     } else {
                         Write-Verbose -Message "File [$($this.ServiceGroupName) is not bound to $($this.MonitorName)]"
                         $pass = $false
@@ -1748,14 +1651,12 @@ class LBServiceGroupMonitorBinding {
         $obj.MonitorName = $this.MonitorName
         $obj.State = $this.State
         $obj.Weight = $this.Weight
-        $obj.Port = $this.Port
         if ($s) {
             $obj.Ensure = [ensure]::Present
             $obj.ServiceGroupName = $s.servicegroupname
             $obj.MonitorName = $s.monitor_name
             $obj.State = $s.state
             $obj.Weight = $s.weight
-            if ($s.port) { $obj.Port = $this.Port }
         } else {
             $obj.Ensure = [ensure]::Absent
         }
@@ -2362,12 +2263,10 @@ class LBResponderAction {
                             comment  = $this.Comment
                         }
 
-                        if ($PSBoundParameters.ContainsKey('Target')) {
-                            $params.Add('target', $this.Target)
-                        }
-                        if ($PSBoundParameters.ContainsKey('HTMLPage')) {
-                            $params.Add('HTMLPage', $this.HTMLPage)
-                        }
+                        if (($this.Target) -AND (!$this.HTMLPage)) { $params.Add('target', $this.Target) }
+                        # if ($this.Target) { $params.Add('target', $this.Target) }
+                        if ($this.HTMLPage) { $params.Add('HTMLPage', $this.HTMLPage) }
+
                         New-NSResponderAction @params -ErrorAction SilentlyContinue
                     }
             } 'Absent' {
@@ -2554,9 +2453,8 @@ class LBRewritePolicy {
                             actionname  = $this.ActionName
                             comment  = $this.Comment
                         }
-                        if ($PSBoundParameters.ContainsKey('LogActionName')) {
-                            $params.Add('LogActionName', $this.LogActionName)
-                        }
+                        if ($this.LogActionName) { $params.Add('LogActionName', $this.LogActionName) }
+
                         New-NSRewritePolicy @params -ErrorAction SilentlyContinue
                     }
             } 'Absent' {
@@ -3349,15 +3247,10 @@ class LBSSLCertificate {
                             CertPath  = $this.CertPath
                             CertKeyFormat = $this.CertKeyFormat
                         }
-                        if ($PSBoundParameters.ContainsKey('KeyPath')) {
-                            $params.Add('KeyPath', $this.KeyPath)
-                        }
-                        # if ($PSBoundParameters.ContainsKey('CertKeyFormat')) {
-                        #     $params.Add('CertKeyFormat', $this.CertKeyFormat)
-                        # }
-                        if ($PSBoundParameters.ContainsKey('Password')) {
-                            $params.Add('Password', $this.Password)
-                        }
+                        if ($this.KeyPath) { $params.Add('KeyPath', $this.KeyPath) }
+                        # if ($this.CertKeyFormat) { $params.Add('CertKeyFormat', $this.CertKeyFormat) }
+                        if ($this.Password) { $params.Add('Password', $this.Password) }
+
                         Add-NSCertKeyPair @params -ErrorAction SilentlyContinue
                     }
                 }
@@ -3900,16 +3793,16 @@ class LBSSLProfile {
                             Name = $this.Name
                             ProfileType = $this.ProfileType
                         }
-                        if ($PSBoundParameters.ContainsKey('SSL2')) { $params.Add('ssl2', $this.SSL2) }
-                        if ($PSBoundParameters.ContainsKey('SSL3')) { $params.Add('ssl3', $this.SSL3) }
-                        if ($PSBoundParameters.ContainsKey('TLS1')) { $params.Add('tls1', $this.TLS1) }
-                        if ($PSBoundParameters.ContainsKey('TLS11')) { $params.Add('tls11', $this.TLS11) }
-                        if ($PSBoundParameters.ContainsKey('TLS12')) { $params.Add('tls12', $this.TLS12) }
-                        if ($PSBoundParameters.ContainsKey('DH')) { $params.Add('dh', $this.DH) }
-                        if ($PSBoundParameters.ContainsKey('DHFile')) { $params.Add('dhfile', $this.DHFile) }
-                        if ($PSBoundParameters.ContainsKey('DHCount')) { $params.Add('dhcount', $this.DHCount) }
-                        if ($PSBoundParameters.ContainsKey('DHKeyExpSizeLimit')) { $params.Add('dhkeyexpsizelimit', $this.DHKeyExpSizeLimit) }
-                        if ($PSBoundParameters.ContainsKey('DenySslRenegotiation')) { $params.Add('denysslrenegotiation', $this.DenySslRenegotiation) }
+                        if ($this.SSL2) { $params.Add('ssl2', $this.SSL2) }
+                        if ($this.SSL3) { $params.Add('ssl3', $this.SSL3) }
+                        if ($this.TLS1) { $params.Add('tls1', $this.TLS1) }
+                        if ($this.TLS11) { $params.Add('tls11', $this.TLS11) }
+                        if ($this.TLS12) { $params.Add('tls12', $this.TLS12) }
+                        if ($this.DH) { $params.Add('dh', $this.DH) }
+                        if ($this.DHFile) { $params.Add('dhfile', $this.DHFile) }
+                        if ($this.DHCount) { $params.Add('dhcount', $this.DHCount) }
+                        if ($this.DHKeyExpSizeLimit) { $params.Add('dhkeyexpsizelimit', $this.DHKeyExpSizeLimit) }
+                        if ($this.DenySslRenegotiation) { $params.Add('denysslrenegotiation', $this.DenySslRenegotiation) }
 
                         New-NSSSLProfile @params -ErrorAction SilentlyContinue
                     }
@@ -4691,7 +4584,7 @@ class LBVirtualServerBinding {
                                 Write-Verbose -Message "Service Group Name bound, [$($this.VirtualServerName)]"
                                 Add-NSLBVirtualServerBinding -VirtualServerName $this.VirtualServerName -ServiceGroupName $this.ServiceGroupName -Weight $this.Weight -Confirm:$false
                         } else {
-                            if (($this.ServiceName -ne $null) -OR ($NSObject.NetScalerFQDN -ne $null)) {
+                            if (($this.ServiceName -ne $null) -OR ($NSObject.ServiceName -ne $null)) {
                                 Write-Verbose -Message "Service Name bound, [$($this.ServiceName)]"
                                 Add-NSLBVirtualServerBinding -VirtualServerName $this.VirtualServerName -ServiceName $this.ServiceName -Weight $this.Weight -Confirm:$false
                             }
