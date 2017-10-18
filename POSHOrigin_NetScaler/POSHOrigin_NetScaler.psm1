@@ -727,30 +727,44 @@ class LBServiceGroup {
                             servicetype = $this.ServiceType
                             state = $this.State
                             comment = $this.Comment
-                            ServerIdleTimeout = $this.ServerIdleTimeout
-                            ClientIdleTimeout = $this.ClientIdleTimeout
-                            HealthMonitor = $this.HealthMonitor
-                            SurgeProtection = $this.SurgeProtection
-                            SureConnect = $this.SureConnect
-                            AppFlowLog = $this.AppFlowLog
-                            ClientKeepAlive = $this.ClientKeepAlive
-                            ClientIP = $this.ClientIP
                             AutoScale = $this.AutoScale
                             Cacheable = $this.Cacheable
+                            HealthMonitor = $this.HealthMonitor
+                            SureConnect = $this.SureConnect
+                            SurgeProtection = $this.SurgeProtection
+                            UseProxyPort = $this.UseProxyPort
+                            DownStateFlush = $this.DownStateFlush
+                            UseClientIP = $this.UseClientIP
+                            ClientKeepAlive = $this.ClientKeepAlive
+                            TCPBuffering = $this.TCPBuffering
+                            ClientIP = $this.ClientIP
+                            ClientIdleTimeout = $this.ClientIdleTimeout
+                            ServerIdleTimeout = $this.ServerIdleTimeout
                         }
-                        if ($this.TrafficDomainId) { $params.Add('TrafficDomainId', $this.TrafficDomainId) }
-                        if ($this.MaxClients) { $params.Add('MaxClients', $this.MaxClients) }
-                        if ($this.CacheType) { $params.Add('CacheType', $this.CacheType) }
+                        # if ($this.AutoScale) { $params.Add('AutoScale', $this.AutoScale) }
+                        # if ($this.Cacheable) { $params.Add('Cacheable', $this.Cacheable) }
+                        # if ($this.HealthMonitor) { $params.Add('HealthMonitor', $this.HealthMonitor) }
+                        # if ($this.AppFlowLog) { $params.Add('AppFlowLog', $this.AppFlowLog) }
+                        # if ($this.SureConnect) { $params.Add('SureConnect', $this.SureConnect) }
+                        # if ($this.SurgeProtection) { $params.Add('SurgeProtection', $this.SurgeProtection) }
                         # if ($this.UseProxyPort) { $params.Add('UseProxyPort', $this.UseProxyPort) }
                         # if ($this.DownStateFlush) { $params.Add('DownStateFlush', $this.DownStateFlush) }
                         # if ($this.UseClientIP) { $params.Add('UseClientIP', $this.UseClientIP) }
+                        # if ($this.ClientKeepAlive) { $params.Add('ClientKeepAlive', $this.ClientKeepAlive) }
                         # if ($this.TCPBuffering) { $params.Add('TCPBuffering', $this.TCPBuffering) }
+                        # if ($this.ClientIP) { $params.Add('ClientIP', $this.ClientIP) }
+                        # if ($this.ClientIdleTimeout) { $params.Add('ClientIdleTimeout', $this.ClientIdleTimeout) }
+                        # if ($this.ServerIdleTimeout) { $params.Add('ServerIdleTimeout', $this.ServerIdleTimeout) }
+
+                        # if ($this.TrafficDomainId) { $params.Add('TrafficDomainId', $this.TrafficDomainId) }
+                        # if ($this.MaxClients) { $params.Add('MaxClients', $this.MaxClients) }
+                        # if ($this.CacheType) { $params.Add('CacheType', $this.CacheType) }
                         # if ($this.HTTPCompression) { $params.Add('HTTPCompression', $this.HTTPCompression) }
                         # if ($this.MaxBandwidthKbps) { $params.Add('MaxBandwidthKbps', $this.MaxBandwidthKbps) }
-                        if ($this.MaxRequests) { $params.Add('MaxRequests', $this.MaxRequests) }
+                        # if ($this.MaxRequests) { $params.Add('MaxRequests', $this.MaxRequests) }
 
                         New-NSLBServiceGroup @params -ErrorAction SilentlyContinue
-                    }h
+                    }
                 }
                 'Absent' {
                     if ($this.Ensure -ne $NSObject.Ensure) {
@@ -1104,7 +1118,7 @@ class LBMonitor {
     [System.Collections.Hashtable]$CustomProperty
 
     [DscProperty()]
-    [string]$ResponseCode
+    [string[]]$ResponseCode
 
     [DscProperty()]
     [string]$HTTPRequest
@@ -1223,7 +1237,7 @@ class LBMonitor {
                     }
                     if ($NSObject.httprequest -ne $this.HTTPRequest) {
                         Write-Verbose -Message "Setting HTTP Request was changed to [$($this.HTTPRequest)]"
-                        Set-NSLBMonitor -Name $this.Name -HTTPRequest $this.HTTPRequest -Verbose:$false -ErrorAction SilentlyContinueg
+                        Set-NSLBMonitor -Name $this.Name -HTTPRequest $this.HTTPRequest -Verbose:$false -ErrorAction SilentlyContinue
                     }
                 } else {
                     Write-Verbose -Message "Creating monitor [$($this.Name)]"
@@ -1247,18 +1261,11 @@ class LBMonitor {
                         secure = $this.Secure
                     }
                     if ($this.DestinationPort) { $params.Add('DestinationPort', $this.DestinationPort) }
-                    if ($this.Transparent) { $params.Add('Transparent', $this.Transparent) }
-                    if ($this.LRTM) { $params.Add('LRTM', $this.LRTM) }
-                    if ($this.Secure) { $params.Add('Secure', $this.Secure) }
                     if ($this.IPTunnel) { $params.Add('IPTunnel', $this.IPTunnel) }
-                    if ($this.TOS) { $params.Add('TOS', $this.TOS) }
-                    if ($this.Reverse) { $params.Add('Reverse', $this.Reverse) }
-                    # if ($this.DestinationIP) { $params.Add('DestinationIP', $this.DestinationIP) }
                     if ($this.DestinationIP) { $params.Add('DestinationIP', $this.DestinationIP) }
                     if ($this.Deviation) { $params.Add('Deviation', $this.Deviation) }
                     if ($this.ResponseTimeoutThreshold) { $params.Add('ResponseTimeoutThreshold', $this.ResponseTimeoutThreshold) }
                     if ($this.AlertRetries) { $params.Add('AlertRetries', $this.AlertRetries) }
-                    if ($this.FailureRetries) { $params.Add('FailureRetries', $this.FailureRetries) }
                     if ($this.NetProfile) { $params.Add('NetProfile', $this.NetProfile) }
                     if ($this.TOSID) { $params.Add('TOSID', $this.TOSID) }
                     if ($this.ScriptName) { $params.Add('ScriptName', $this.ScriptName) }
@@ -1270,8 +1277,8 @@ class LBMonitor {
                             $params.Add($CustomProperty.ToLower(), $CustomProperty[$CustomProperty])
                         }
                     }
-                    if ($this.ResponseCode) { $params.Add('ResponseCode', $this.ResponseCode) }
                     if ($this.HTTPRequest) { $params.Add('HTTPRequest', $this.HTTPRequest) }
+                    if ($this.ResponseCode) { $params.Add('ResponseCode', $this.ResponseCode ) }
                     if ($this.Send) { $params.Add('Send', $this.Send) }
                     if ($this.Recv) { $params.Add('Recv', $this.Recv) }
                     if ($this.DispatcherPort) { $params.Add('DispatcherPort', $this.DispatcherPort) }
@@ -1318,7 +1325,7 @@ class LBMonitor {
                             Write-Verbose -Message "Monitor Name does not match [$($NSObject.monitorname) <> $($this.Name)]"
                             $pass = $false
                         }
-                        if ($NSObject.DestinationIP -ne $this.DestinationIP) {
+                        if (($NSObject.DestinationIP -ne $this.DestinationIP) -AND ($this.DestinationIP -ne $null)) {
                             Write-Verbose -Message "Monitor Destination IP does not match [$($NSObject.DestinationIP) <> $($this.DestinationIP)]"
                             $pass = $false
                         }
@@ -1390,10 +1397,11 @@ class LBMonitor {
                             Write-Verbose -Message "Monitor Destination Port does not match [$($NSObject.DestinationPort) <> $($this.DestinationPort)]"
                             $pass = $false
                         }
-                        if ($NSObject.ResponseCode -ne $this.ResponseCode) {
+                        if (diff $this.ResponseCode $NSObject.ResponseCode) {
                             Write-Verbose -Message "Monitor Response Code does not match [$($NSObject.ResponseCode) <> $($this.ResponseCode)]"
                             $pass = $false
                         }
+
                         if ($NSObject.HTTPRequest -ne $this.HTTPRequest) {
                             Write-Verbose -Message "Monitor HTTPRequest setting does not match [$($NSObject.HTTPRequest) <> $($this.HTTPRequest)]"
                             $pass = $false
@@ -1453,6 +1461,7 @@ class LBMonitor {
         $obj.FailureRetries = $this.FailureRetries
         $obj.DestinationPort = $this.DestinationPort
         $obj.HTTPRequest = $this.HTTPRequest
+        $obj.ResponseCode = $this.ResponseCode
         if ($s) {
             $obj.Ensure = [ensure]::Present
             $obj.Name = $s.monitorname
@@ -1476,6 +1485,7 @@ class LBMonitor {
             $obj.FailureRetries = $s.failureretries
             $obj.DestinationPort = $s.destport
             $obj.HTTPRequest = $s.httprequest
+            $obj.ResponseCode = $s.respcode -join ","
         } else {
             $obj.Ensure = [ensure]::Absent
         }
@@ -1538,22 +1548,22 @@ class LBServiceGroupMonitorBinding {
                         if ($NSObject.ServiceGroupName -ne $this.ServiceGroupName) {
                             Write-Warning -Message "Setting ServiceGroupName [$($this.ServiceGroupName)] does not match, rebinding"
                             Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
-                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -State $this.State -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
                         }
                         if ($NSObject.MonitorName -ne $this.MonitorName) {
                             Write-Warning -Message "Setting MonitorName [$($this.MonitorName)] does not match, rebinding"
                             Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
-                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -State $this.State -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
                         }
                         if ($NSObject.Weight -ne $this.Weight) {
                             Write-Warning -Message "Setting Weight [$($this.Weight)] does not match, rebinding"
                             Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
-                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -State $this.State -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
                         }
                         if ($NSObject.State -ne $this.State) {
                             Write-Warning -Message "Setting State [$($this.State)] does not match, rebinding"
                             Remove-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Confirm:$false
-                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -State $this.State -Confirm:$false
+                            Add-NSLBServiceGroupMonitorBinding -ServiceGroupName $this.ServiceGroupName -MonitorName $this.MonitorName -Weight $this.Weight -Port $this.Port -State $this.State -Confirm:$false
                         }
                    } else {
                         Write-Verbose -Message "Added [$($this.MonitorName)] binding for, [$($this.ServiceGroupName)]"
@@ -3206,8 +3216,8 @@ class LBSSLCertificate {
     [DscProperty()]
     [string]$CertKeyFormat
 
-    # [DscProperty()]
-    # [securestring]$Password
+    [DscProperty()]
+    [pscredential]$Password
 
 
     Init() {
@@ -3236,11 +3246,34 @@ class LBSSLCertificate {
                 'Present' {
                     if ($this.Ensure -eq $NSObject.Ensure) {
                         # Run tests and set any needed attributes to match desired configuration
-                        if (($NSObject.CertKeyName -ne $this.CertKeyName) -OR ($NSObject.CertPath -ne $this.CertPath) -OR ($NSObject.KeyPath -ne $this.KeyPath) -OR ($NSObject.CertKeyFormat -ne $this.CertKeyFormat)) {
+                        $params = @{
+                            CertKeyName = $this.CertKeyName
+                            CertPath  = $this.CertPath
+                            CertKeyFormat = $this.CertKeyFormat
+                        }
+                        if ($this.KeyPath) { $params.Add('KeyPath', $this.KeyPath) }
+                        if ($this.Password) {
+                            $params.Add('Password', $this.Password.Password)
+                        }
+
+                        if ($NSObject.CertKeyName -ne $this.CertKeyName) {
                             Write-Verbose -Message "Warning, resource cannot be changed to [$($this.CertKeyName)], resource can only be removed and recreated"
                             Remove-NSCertKeyPair -CertKeyName $this.CertKeyName
+                            Add-NSCertKeyPair @params -ErrorAction SilentlyContinue
                         }
-                } else {
+                        if ($NSObject.CertPath -ne $this.CertPath) {
+                            Write-Verbose -Message "Warning, resource cannot be changed to [$($this.CertPath)], resource can only be removed and recreated"
+                            Add-NSCertKeyPair @params -ErrorAction SilentlyContinue
+                        }
+                        if ($NSObject.KeyPath -ne $this.KeyPath) {
+                            Write-Verbose -Message "Warning, resource cannot be changed to [$($this.KeyPath)], resource can only be removed and recreated"
+                            Add-NSCertKeyPair @params -ErrorAction SilentlyContinue
+                        }
+                        if ($NSObject.CertKeyFormat -ne $this.CertKeyFormat) {
+                            Write-Verbose -Message "Warning, resource cannot be changed to [$($this.CertKeyFormat)], resource can only be removed and recreated"
+                            Add-NSCertKeyPair @params -ErrorAction SilentlyContinue
+                        }
+                    } else {
                         Write-Verbose -Message "Creating resource [$($this.CertKeyName)]"
                         $params = @{
                             CertKeyName = $this.CertKeyName
@@ -3248,9 +3281,9 @@ class LBSSLCertificate {
                             CertKeyFormat = $this.CertKeyFormat
                         }
                         if ($this.KeyPath) { $params.Add('KeyPath', $this.KeyPath) }
-                        # if ($this.CertKeyFormat) { $params.Add('CertKeyFormat', $this.CertKeyFormat) }
-                        if ($this.Password) { $params.Add('Password', $this.Password) }
-
+                        if ($this.Password) {
+                            $params.Add('Password',$this.Password.Password)
+                        }
                         Add-NSCertKeyPair @params -ErrorAction SilentlyContinue
                     }
                 }
@@ -3284,21 +3317,23 @@ class LBSSLCertificate {
             switch ($this.Ensure) {
                 'Present' {
                     if ($this.Ensure -eq $NSObject.Ensure) {
-                            # Run tests and set any needed attributes to match desired configuration
-                            if ($NSObject.certkeyname -ne $this.CertKeyName) {
-                                Write-Verbose -Message "Certificate Key Name does not match [$($NSObject.certkeyname) <> $($this.CertKeyName)]"
-                                $pass = $false
-                            }
-                            if ($NSObject.certpath -ne $this.CertPath) {
-                                Write-Verbose -Message "Certificate Path does not match [$($NSObject.certpath) <> $($this.CertPath)]"
-                                $pass = $false
-                            }
-                            if ($this.KeyPath) {
-                                if ($NSObject.keypath -ne $this.KeyPath) {
-                                    Write-Verbose -Message "Key Path does not match [$($NSObject.keypath) <> $($this.KeyPath)]"
-                                    $pass = $false
-                                }
-                            }
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.certkeyname -ne $this.CertKeyName) {
+                            Write-Verbose -Message "Certificate Key Name does not match [$($NSObject.certkeyname) <> $($this.CertKeyName)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.certpath -ne $this.CertPath) {
+                            Write-Verbose -Message "Certificate Path does not match [$($NSObject.certpath) <> $($this.CertPath)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.keypath -ne $this.KeyPath) {
+                            Write-Verbose -Message "Key Path does not match [$($NSObject.keypath) <> $($this.KeyPath)]"
+                            $pass = $false
+                        }
+                        if ($NSObject.CertKeyFormat -ne $this.CertKeyFormat) {
+                            Write-Verbose -Message "Cert Key Format does not match [$($NSObject.CertKeyFormat) <> $($this.CertKeyFormat)]"
+                            $pass = $false
+                        }
                     } else {
                         Write-Verbose -Message "Certificate[$($this.CertKeyName)] was not found"
                         $pass = $false
@@ -3335,16 +3370,16 @@ class LBSSLCertificate {
         $obj = [LBSSLCertificate]::new()
         $obj.CertKeyName = $this.CertKeyName
         $obj.CertPath = $this.CertPath
-        $obj.CertKeyFormat = $this.CertKeyFormat
         $obj.KeyPath = $this.KeyPath
+        $obj.CertKeyFormat = $this.CertKeyFormat
+        # $obj.Password = $this.Password
         if ($s) {
             $obj.Ensure = [ensure]::Present
-            $obj.CertKeyName = $s.certkey.toString()
-            $obj.CertPath = $s.cert.toString()
-            $obj.CertKeyFormat = $s.inform.toString()
-            if ($s.key) {
-                $obj.KeyPath = $s.key.toString()
-            }
+            $obj.CertKeyName = $s.certkey
+            $obj.CertPath = $s.cert
+            if ($s.key) { $obj.KeyPath = $s.key }
+            $obj.CertKeyFormat = $s.inform
+            # if ($s.Password) { $this.Password = ''}
         } else {
             $obj.Ensure = [ensure]::Absent
         }
@@ -3961,9 +3996,9 @@ class LBSSLProfile {
 }
 
 [DscResource()]
-class LBSSLProfileBinding {
+class LBSSLToVserverProfileBinding {
     [DscProperty(Key)]
-    [string]$Name
+    [string]$VirtualServerName
 
     [DscProperty()]
     [Ensure]$Ensure = [Ensure]::Present
@@ -4003,32 +4038,22 @@ class LBSSLProfileBinding {
                 'Present' {
                     if ($this.Ensure -eq $NSObject.Ensure) {
                         # Run tests and set any needed attributes to match desired configuration
-                        if ($NSObject.name -ne $this.Name) {
-                            Write-Verbose -Message "Warning, resource cannot be changed to [$($this.Name)], resource can only be removed and recreated"
+                        if ($NSObject.VirtualServerName -ne $this.VirtualServerName) {
+                            Set-NSLBSSLVirtualServer -Name $this.VirtualServerName -SSLProfile $this.SSLProfile -Verbose:$false -ErrorAction SilentlyContinue
+                            Write-warning -Message "Warning, attempting to change profile on [$($this.VirtualServerName), please verify"
                         }
-                        if ($NSObject.sslprofile -ne $this.SSLProfile) {
-                            Write-Verbose -Message "Setting SSLProfile [$($this.SSLProfile)]"
-                            Set-NSLBSSLVirtualServer -Name $this.Name -SSLProfile $this.SSLProfile -Verbose:$false
+                        if ($NSObject.SSLProfile -ne $this.SSLProfile) {
+                            Write-warning -Message "Warning, attempting to change profile on [$($this.SSLProfile)], please verify"
+                            Set-NSLBSSLVirtualServer -Name $this.VirtualServerName -SSLProfile $this.SSLProfile -Verbose:$false -ErrorAction SilentlyContinue
                         }
-                    } else {
-                        Write-Verbose -Message "Creating resource [$($this.Name)]"
-                        $params = @{
-                            Name = $this.Name
-                            sslprofile = $this.SSLProfile
-                        }
-
-                        Set-NSLBSSLVirtualServer @params -ErrorAction SilentlyContinue
+                } else {
+                        Write-Verbose -Message "Creating resource [$($this.VirtualServerName)"
+                        Set-NSLBSSLVirtualServer -Name $this.VirtualServerName -SSLProfile $this.SSLProfile -Verbose:$false -ErrorAction SilentlyContinue
                     }
                 }
                 'Absent' {
                     if ($this.Ensure -ne $NSObject.Ensure) {
-                        Write-Verbose -Message "Removed resource [$($this.Name)]"
-                        $params = @{
-                            Name = $this.Name
-                            sslprofile = $this.SSLProfile
-                        }
-
-                        Set-NSLBSSLVirtualServer @params -ErrorAction SilentlyContinue
+                        Write-warning -Message "Warning, [$($this.SSLProfile)] must be removed manually from [$($this.VirtualServerName)]"
                     }
                 }
             }
@@ -4056,8 +4081,8 @@ class LBSSLProfileBinding {
                 'Present' {
                     if ($this.Ensure -eq $NSObject.Ensure) {
                         # Run tests and set any needed attributes to match desired configuration
-                        if ($NSObject.name -ne $this.Name) {
-                            Write-Verbose -Message "Name does not match [$($NSObject.name) <> $($this.Name)]"
+                        if ($NSObject.VirtualServerName -ne $this.VirtualServerName) {
+                            Write-Verbose -Message "VirtualServer does not match [$($NSObject.VirtualServerName) <> $($this.VirtualServerName)]"
                             $pass = $false
                         }
                         if ($NSObject.sslprofile -ne $this.SSLProfile) {
@@ -4065,7 +4090,7 @@ class LBSSLProfileBinding {
                             $pass = $false
                         }
                     } else {
-                        Write-Verbose -Message "SSL Profile [$($this.Name)] was not found"
+                        Write-Verbose -Message "SSL Profile for [$($this.VirtualServerName) was not found"
                         $pass = $false
                     }
                 }
@@ -4088,22 +4113,22 @@ class LBSSLProfileBinding {
         return $pass
     }
 
-    [LBSSLProfileBinding]Get() {
+    [LBSSLToVserverProfileBinding]Get() {
         $t = $null
         $t = $this.Init()
 
         try {
-            $s = Get-NSSSLProfile -Name $this.Name -Verbose:$false -ErrorAction SilentlyContinue
+            $s = Get-NSLBSSLProfileToVserverBinding -VirtualServerName $this.VirtualServerName -Verbose:$false -ErrorAction SilentlyContinue
         } catch {
             $s = $null
         }
-        $obj = [LBSSLProfileBinding]::new()
-        $obj.Name = $this.Name
-        $obj.SSLProfile = $this.SSLProfile
+        $obj = [LBSSLToVserverProfileBinding]::new()
+        $obj.VirtualServerName
+        $obj.SSLProfile
         if ($s) {
             $obj.Ensure = [ensure]::Present
-            $obj.Name = $s.name
-            $obj.SSLProfile = $s.sslprofile
+            $obj.VirtualServerName = $s.vservername
+            if ($s.sslprofile) { $obj.SSLProfile = $s.sslprofile }
         } else {
             $obj.Ensure = [ensure]::Absent
         }
@@ -6165,6 +6190,156 @@ class LBService {
             $obj.MaxClients = $s.maxclient
             $obj.ClientIdleTimeout = $s.clttimeout
             $obj.ServerIdleTimeout = $s.svrtimeout
+        } else {
+            $obj.Ensure = [ensure]::Absent
+        }
+        Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        return $obj
+    }
+}
+
+[DscResource()]
+class LBCipherToVserverBinding {
+    [DscProperty(Key)]
+    [string]$VirtualServerName
+
+    [DscProperty()]
+    [Ensure]$Ensure = [Ensure]::Present
+
+    [DscProperty(Mandatory)]
+    [string]$NetScalerFQDN
+
+    [DscProperty(Mandatory)]
+    [pscredential]$Credential
+
+    [DscProperty(Mandatory)]
+    [string]$CipherName
+
+    Init() {
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+    }
+
+    [void]Set() {
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+
+        try {
+            Import-Module -Name Netscaler -Verbose:$false -Debug:$false
+            Connect-NetScaler -Hostname $this.NetScalerFQDN -Credential $this.Credential -Verbose:$false
+        } catch {
+            throw "Unable to establish a Netscaler session with $($this.NetScalerFQDN)"
+        }
+
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                        # Run tests and set any needed attributes to match desired configuration
+                        if ($NSObject.VirtualServerName -ne $this.VirtualServerName) {
+                            Remove-NSLBSSLVirtualServerCipherGroupBinding -VirtualServerName $this.VirtualServerName -CipherName $this.CipherName
+                            Remove-NSLBSSLVirtualServerCipherGroupBinding -VirtualServerName $this.VirtualServerName -CipherName "DEFAULT"
+                            Add-NSLBSSLVirtualServerCipherGroupBinding -VirtualServerName $this.VirtualServerName -CipherName $this.CipherName
+                            Write-Warning -Message "Binding Cipher [$($this.CipherName)] to virtualserver [$($this.VirtualServerName)"
+                        }
+                        if ($NSObject.CipherName -ne $this.CipherName) {
+                            Remove-NSLBSSLVirtualServerCipherGroupBinding -VirtualServerName $this.VirtualServerName -CipherName $this.CipherName
+                            Remove-NSLBSSLVirtualServerCipherGroupBinding -VirtualServerName $this.VirtualServerName -CipherName "DEFAULT"
+                            Add-NSLBSSLVirtualServerCipherGroupBinding -VirtualServerName $this.VirtualServerName -CipherName $this.CipherName
+                            Write-Warning -Message "Unable to unbind the resource [$($this.SSLProfile)] from virtualserver [$($this.VirtualServerName)"
+                        }
+                   } else {
+                        Write-Verbose -Message "Cipher [$($this.VirtualServerName) was bound to [$($this.CipherName)]"
+                        $params = @{
+                            CipherName = $this.CipherName
+                            VirtualServer = $this.VirtualServerName
+                        }
+                        Remove-NSLBSSLVirtualServerCipherGroupBinding -VirtualServerName $this.VirtualServerName -CipherName "DEFAULT"
+                        Add-NSLBSSLVirtualServerCipherGroupBinding @params -Confirm:$false
+                    }
+                } 'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        Write-Verbose -Message "Currently unable to remove [$($this.SSLProfile)] binding due to api bug.  This must be done manually"
+                    }
+                }
+            }
+        Save-NSConfig
+        } catch {
+            Write-Error 'There was a problem setting the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+    }
+
+ [bool]Test() {
+        $pass = $true
+        $t = $null
+        $t = $this.Init()
+        $NSObject = $this.Get()
+        try {
+            switch ($this.Ensure) {
+                'Present' {
+                    if ($this.Ensure -eq $NSObject.Ensure) {
+                            # Run tests and set any needed attributes to match desired configuration
+                            if ($NSObject.VirtualServerName -ne $this.VirtualServerName) {
+                                Write-Verbose -Message "VirtualServer does not match [$($NSObject.VirtualServerName) <> $($this.VirtualServerName)]"
+                                $pass = $false
+                            }
+                            if ($NSObject.CipherName -ne $this.CipherName) {
+                                Write-Verbose -Message "CipherName does not match [$($NSObject.CipherName) <> $($this.CipherName)]"
+                                $pass = $false
+                            }
+                    } else {
+                        Write-Verbose -Message "Cipher group [$($this.CipherName)] is not bound"
+                        $pass = $false
+                    }
+                }
+                'Absent' {
+                    if ($this.Ensure -ne $NSObject.Ensure) {
+                        $pass = $false
+                    }
+                }
+            }
+        } catch {
+            Write-Error 'There was a problem testing the resource'
+            Write-Error "$($_.InvocationInfo.ScriptName)($($_.InvocationInfo.ScriptLineNumber)): $($_.InvocationInfo.Line)"
+            Write-Error $_
+        }
+        try {
+            Disconnect-NetScaler -Verbose:$false -ErrorAction SilentlyContinue
+        } catch {
+            # Do nothing
+        }
+        return $pass
+    }
+
+    [LBCipherToVserverBinding]Get() {
+        $t = $null
+        $t = $this.Init()
+
+        try {
+            $s = Get-NSLBSSLVirtualServerCipherGroupBinding -VirtualServerName $this.VirtualServerName -ErrorAction SilentlyContinue
+        } catch {
+            $s = $null
+        }
+
+        $obj = [LBCipherToVserverBinding]::new()
+        $obj.VirtualServerName
+        $obj.CipherName
+        if ($s) {
+            $obj.Ensure = [ensure]::Present
+            $obj.VirtualServerName = $s.vservername
+            $obj.CipherName = $s.cipheraliasname
         } else {
             $obj.Ensure = [ensure]::Absent
         }

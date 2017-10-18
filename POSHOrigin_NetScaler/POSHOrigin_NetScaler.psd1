@@ -3,7 +3,7 @@
     RootModule = 'POSHOrigin_NetScaler.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.1.2'
+    ModuleVersion = '1.1.3'
 
     # ID used to uniquely identify this module
     GUID = 'bd4390dc-a8ad-4bce-8d69-f53ccf8e4163'
@@ -24,7 +24,7 @@
     RequiredModules = 'NetScaler'
 
     # DSC resources to export from this module
-    DscResourcesToExport = @('LBVirtualServer','LBServer','LBMonitor','LBServiceGroupMonitorBinding','LBServiceGroup','LBNTPServer','LBResponderPolicy','LBResponderAction','LBResponderHTMLPage','LBRewritePolicy','LBRewriteAction','LBDNSServer','LBNSMode','LBNSFeature','LBNSIP','LBVirtualServerBinding','LBSystemFile','LBVLAN','LBResponderPolicyBinding','LBServiceGroupMember','LBService','LBServiceMonitorBinding','LBSSLCertificate','LBSSLCertificateBinding','LBSSLCertificateLink','LBSSLProfile','LBSSLProfileBinding')
+    DscResourcesToExport = @('LBVirtualServer','LBServer','LBMonitor','LBServiceGroupMonitorBinding','LBServiceGroup','LBNTPServer','LBResponderPolicy','LBResponderAction','LBResponderHTMLPage','LBRewritePolicy','LBRewriteAction','LBDNSServer','LBNSMode','LBNSFeature','LBNSIP','LBVirtualServerBinding','LBSystemFile','LBVLAN','LBResponderPolicyBinding','LBServiceGroupMember','LBService','LBServiceMonitorBinding','LBSSLCertificate','LBSSLCertificateBinding','LBSSLCertificateLink','LBSSLProfile','LBSSLToVserverProfileBinding','LBSSLProfileToVserverBinding','LBCipherToVserverBinding')
 
     PrivateData = @{
         PSData = @{
